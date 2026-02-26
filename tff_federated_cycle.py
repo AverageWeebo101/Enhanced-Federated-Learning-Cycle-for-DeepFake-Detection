@@ -76,12 +76,18 @@ import numpy as np
 import tensorflow as tf
 
 # ---------- Conditional TFF import ------------------------------------- #
+# Primary: use the Flower-backed adapter (works on Python 3.12 + TF 2.19).
+# Fallback: real TFF if the adapter is unavailable.
 try:
-    import tensorflow_federated as tff
+    from flwr_adapter import tff_compat as tff  # type: ignore[assignment]
     TFF_AVAILABLE = True
 except ImportError:
-    tff = None  # type: ignore[assignment]
-    TFF_AVAILABLE = False
+    try:
+        import tensorflow_federated as tff
+        TFF_AVAILABLE = True
+    except ImportError:
+        tff = None  # type: ignore[assignment]
+        TFF_AVAILABLE = False
 
 # ---------- Existing modules  (Parts 1–5) ----------------------------- #
 from enhanced_client_selection import (          # Part 1
@@ -295,7 +301,14 @@ class TFFFederatedLearningCycle:
         """Load the pre-trained EfficientNet model."""
         cfg = self.config
         logger.info("Loading global model from %s …", cfg.model_path)
-        model = tf.keras.models.load_model(cfg.model_path, compile=False)
+        # Register EfficientNet preprocessing so Keras can deserialize the .h5
+        from tensorflow.keras.applications.efficientnet import (
+            preprocess_input as _effnet_preprocess,
+        )
+        _custom = {"preprocess_input": _effnet_preprocess}
+        model = tf.keras.models.load_model(
+            cfg.model_path, custom_objects=_custom, compile=False,
+        )
         model.compile(
             optimizer=tf.keras.optimizers.Adam(cfg.local_lr),
             loss="binary_crossentropy",

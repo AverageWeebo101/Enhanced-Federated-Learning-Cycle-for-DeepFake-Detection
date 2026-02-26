@@ -16,6 +16,7 @@ from pathlib import Path
 
 # ── Ordered list of module files to embed ──────────────────────────────
 MODULE_FILES = [
+    "flwr_adapter.py",
     "enhanced_client_selection.py",
     "update_validation.py",
     "knowledge_distillation.py",
@@ -28,6 +29,7 @@ MODULE_FILES = [
 ]
 
 PART_DESCRIPTIONS = {
+    "flwr_adapter.py": "Flower Adapter — TFF-compatible API backed by Flower",
     "enhanced_client_selection.py": "Part 1 — Enhanced Client Selection (multi-criteria scoring)",
     "update_validation.py": "Part 2 — Update Validation & Contribution Weighing",
     "knowledge_distillation.py": "Part 3 — Server-Side Knowledge Distillation",
@@ -132,22 +134,19 @@ def build_notebook() -> dict:
         "import tensorflow as tf\n"
         "print(f'Current TF version: {tf.__version__}')\n"
         "\n"
-        "# Install TFF matching the current TF version\n"
-        "# See: https://www.tensorflow.org/federated/install\n"
-        "!pip install -q tensorflow-federated\n"
-        "\n"
-        "# If the above fails, try pinning specific versions:\n"
-        "# !pip install -q tensorflow==2.14.1 tensorflow-federated==0.72.0\n"
+        "# Install Flower — modern FL framework (replaces archived TFF)\n"
+        "!pip install -q flwr>=1.7\n"
     ))
 
     cells.append(code_cell(
         "# ── Verify installation ────────────────────────────────────────\n"
         "import tensorflow as tf\n"
-        "import tensorflow_federated as tff\n"
+        "from flwr_adapter import tff_compat as tff, FLWR_AVAILABLE\n"
         "import numpy as np\n"
         "\n"
         "print(f'TensorFlow  : {tf.__version__}')\n"
-        "print(f'TFF         : {tff.__version__}')\n"
+        "print(f'TFF adapter : {tff.__version__}')\n"
+        "print(f'Flower      : {\"available\" if FLWR_AVAILABLE else \"standalone\"}')\n"
         "print(f'NumPy       : {np.__version__}')\n"
         "print(f'GPU         : {tf.config.list_physical_devices(\"GPU\")}')\n"
         "print('\\n✅ Environment ready.')\n"

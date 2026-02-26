@@ -351,8 +351,13 @@ class FederatedRoundRunner:
         local_batch_size: int = 32,
         learning_rate: float = 1e-4,
     ) -> None:
+        # Register EfficientNet preprocessing so Keras can deserialize the .h5
+        from tensorflow.keras.applications.efficientnet import (
+            preprocess_input as _effnet_preprocess,
+        )
+        _custom = {"preprocess_input": _effnet_preprocess}
         self.global_model: tf.keras.Model = tf.keras.models.load_model(
-            global_model_path, compile=False
+            global_model_path, custom_objects=_custom, compile=False,
         )
         self.global_model.compile(
             optimizer=tf.keras.optimizers.Adam(learning_rate),

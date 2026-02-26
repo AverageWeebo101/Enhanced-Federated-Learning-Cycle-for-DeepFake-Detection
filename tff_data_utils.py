@@ -30,12 +30,18 @@ import numpy as np
 import tensorflow as tf
 
 # ---------- Conditional TFF import ------------------------------------- #
+# Primary: use the Flower-backed adapter (works on Python 3.12 + TF 2.19).
+# Fallback: real TFF if the adapter is unavailable.
 try:
-    import tensorflow_federated as tff
+    from flwr_adapter import tff_compat as tff  # type: ignore[assignment]
     TFF_AVAILABLE = True
 except ImportError:
-    tff = None  # type: ignore[assignment]
-    TFF_AVAILABLE = False
+    try:
+        import tensorflow_federated as tff
+        TFF_AVAILABLE = True
+    except ImportError:
+        tff = None  # type: ignore[assignment]
+        TFF_AVAILABLE = False
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -52,13 +58,14 @@ logger = logging.getLogger(__name__)
 # ====================================================================== #
 
 def _require_tff() -> None:
-    """Raise a clear error if TFF is not installed."""
+    """Raise a clear error if neither the Flower adapter nor TFF is available."""
     if not TFF_AVAILABLE:
         raise RuntimeError(
-            "TensorFlow Federated is not installed in this environment.\n"
-            "Install it with:  pip install tensorflow-federated==0.48.0\n"
-            "See requirements_tff.txt for the full compatible stack.\n"
-            "Recommended: use Google Colab where TFF is pre-installed."
+            "Neither the Flower adapter (flwr_adapter) nor TensorFlow Federated\n"
+            "is available in this environment.\n"
+            "Install Flower with:  pip install flwr\n"
+            "The flwr_adapter module provides a drop-in replacement for TFF.\n"
+            "Alternatively, install TFF:  pip install tensorflow-federated==0.48.0"
         )
 
 

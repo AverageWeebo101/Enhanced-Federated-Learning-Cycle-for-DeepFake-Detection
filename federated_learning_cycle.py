@@ -359,7 +359,14 @@ class FederatedLearningCycle:
         """Load the pre-trained EfficientNet model from disk."""
         cfg = self.config
         logger.info("Loading global model from %s …", cfg.model_path)
-        model = tf.keras.models.load_model(cfg.model_path, compile=False)
+        # Register EfficientNet preprocessing so Keras can deserialize the .h5
+        from tensorflow.keras.applications.efficientnet import (
+            preprocess_input as _effnet_preprocess,
+        )
+        _custom = {"preprocess_input": _effnet_preprocess}
+        model = tf.keras.models.load_model(
+            cfg.model_path, custom_objects=_custom, compile=False,
+        )
         model.compile(
             optimizer=tf.keras.optimizers.Adam(cfg.local_lr),
             loss="binary_crossentropy",

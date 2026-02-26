@@ -39,12 +39,18 @@ import numpy as np
 import tensorflow as tf
 
 # ---------- Conditional TFF import ------------------------------------- #
+# Primary: use the Flower-backed adapter (works on Python 3.12 + TF 2.19).
+# Fallback: real TFF if the adapter is unavailable.
 try:
-    import tensorflow_federated as tff
+    from flwr_adapter import tff_compat as tff  # type: ignore[assignment]
     TFF_AVAILABLE = True
 except ImportError:
-    tff = None  # type: ignore[assignment]
-    TFF_AVAILABLE = False
+    try:
+        import tensorflow_federated as tff
+        TFF_AVAILABLE = True
+    except ImportError:
+        tff = None  # type: ignore[assignment]
+        TFF_AVAILABLE = False
 
 from tff_data_utils import _require_tff
 
