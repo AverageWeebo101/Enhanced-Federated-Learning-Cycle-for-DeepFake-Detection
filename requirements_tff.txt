@@ -1,0 +1,55 @@
+# ==============================================================================
+#  TFF-Compatible Environment Requirements
+# ==============================================================================
+#
+#  TensorFlow Federated (TFF) has strict version dependencies.
+#  The latest PyPI release (0.48.0) requires TF 2.11.x and specific
+#  versions of JAX, gRPC, and other libraries that are only available
+#  on Linux / macOS.
+#
+#  RECOMMENDED:  Run on Google Colab where TFF is pre-installed.
+#
+#  ---- Option A: Google Colab (recommended) ----
+#
+#    In a Colab notebook cell:
+#
+#      !pip install tensorflow-federated==0.48.0
+#
+#    Colab typically ships with TF 2.11–2.15 which is compatible.
+#
+#  ---- Option B: Linux / macOS (local or server) ----
+#
+#    Create a fresh virtual environment with Python 3.9 or 3.10:
+#
+#      python3.10 -m venv tff_env
+#      source tff_env/bin/activate
+#      pip install --upgrade pip
+#      pip install -r requirements_tff.txt
+#
+#  ---- Option C: Docker ----
+#
+#      docker run -it --rm tensorflow/tensorflow:2.11.1-gpu bash
+#      pip install tensorflow-federated==0.48.0
+#
+# ==============================================================================
+#
+#  NOTE: Windows is NOT officially supported by TFF.
+#  The existing modules (Parts 1–6) work on Windows with TF 2.19+.
+#  For TFF integration, use one of the options above.
+#
+# ==============================================================================
+
+# Core — use EXACT versions for TFF compatibility
+tensorflow==2.11.1
+tensorflow-federated==0.48.0
+
+# Numerical / scientific
+numpy>=1.23,<1.24
+
+# These are auto-installed by TFF but listed for reference
+# jaxlib==0.3.14
+# dm-tree==0.1.7
+# attrs==21.4.0
+
+# Project-specific (required by all modules)
+# h5py is included with tensorflow

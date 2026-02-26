@@ -1,0 +1,146 @@
+[
+  {
+    "model_name": "demo_effnet",
+    "timestamp": "2026-02-26 05:48:01",
+    "federated_round": 1,
+    "classification": {
+      "accuracy": 0.512,
+      "f1_macro": 0.495659,
+      "f1_weighted": 0.493117,
+      "f1_per_class": {
+        "Real": 0.586441,
+        "Fake": 0.404878
+      },
+      "precision_macro": 0.520521,
+      "recall_macro": 0.517446,
+      "roc_auc": 0.53056,
+      "confusion_matrix": [
+        [
+          173,
+          70
+        ],
+        [
+          174,
+          83
+        ]
+      ],
+      "num_samples": 500
+    },
+    "latency": {
+      "mean_ms": 5.8301,
+      "std_ms": 1.5917,
+      "min_ms": 4.4987,
+      "max_ms": 8.8243,
+      "p50_ms": 4.8921,
+      "p95_ms": 8.2784,
+      "p99_ms": 8.7151,
+      "num_batches": 5,
+      "batch_size": 64,
+      "total_samples": 308
+    },
+    "model_size": {
+      "total_params": 1089,
+      "trainable_params": 1089,
+      "non_trainable_params": 0,
+      "file_size_bytes": 28000,
+      "file_size_mb": 0.0267
+    },
+    "extra": {}
+  },
+  {
+    "model_name": "demo_effnet",
+    "timestamp": "2026-02-26 05:48:01",
+    "federated_round": 2,
+    "classification": {
+      "accuracy": 0.514,
+      "f1_macro": 0.493326,
+      "f1_weighted": 0.49046,
+      "f1_per_class": {
+        "Real": 0.595674,
+        "Fake": 0.390977
+      },
+      "precision_macro": 0.524648,
+      "recall_macro": 0.520064,
+      "roc_auc": 0.535604,
+      "confusion_matrix": [
+        [
+          179,
+          64
+        ],
+        [
+          179,
+          78
+        ]
+      ],
+      "num_samples": 500
+    },
+    "latency": {
+      "mean_ms": 6.1488,
+      "std_ms": 1.7429,
+      "min_ms": 4.0509,
+      "max_ms": 8.9744,
+      "p50_ms": 5.7454,
+      "p95_ms": 8.6043,
+      "p99_ms": 8.9004,
+      "num_batches": 5,
+      "batch_size": 64,
+      "total_samples": 308
+    },
+    "model_size": {
+      "total_params": 1089,
+      "trainable_params": 1089,
+      "non_trainable_params": 0,
+      "file_size_bytes": 28000,
+      "file_size_mb": 0.0267
+    },
+    "extra": {}
+  },
+  {
+    "model_name": "demo_effnet",
+    "timestamp": "2026-02-26 05:48:02",
+    "federated_round": 3,
+    "classification": {
+      "accuracy": 0.514,
+      "f1_macro": 0.493326,
+      "f1_weighted": 0.49046,
+      "f1_per_class": {
+        "Real": 0.595674,
+        "Fake": 0.390977
+      },
+      "precision_macro": 0.524648,
+      "recall_macro": 0.520064,
+      "roc_auc": 0.535124,
+      "confusion_matrix": [
+        [
+          179,
+          64
+        ],
+        [
+          179,
+          78
+        ]
+      ],
+      "num_samples": 500
+    },
+    "latency": {
+      "mean_ms": 5.8611,
+      "std_ms": 1.1469,
+      "min_ms": 3.9412,
+      "max_ms": 6.989,
+      "p50_ms": 6.5357,
+      "p95_ms": 6.9273,
+      "p99_ms": 6.9767,
+      "num_batches": 5,
+      "batch_size": 64,
+      "total_samples": 308
+    },
+    "model_size": {
+      "total_params": 1089,
+      "trainable_params": 1089,
+      "non_trainable_params": 0,
+      "file_size_bytes": 28000,
+      "file_size_mb": 0.0267
+    },
+    "extra": {}
+  }
+]

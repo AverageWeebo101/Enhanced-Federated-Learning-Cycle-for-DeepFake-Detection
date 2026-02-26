@@ -1,0 +1,52 @@
+{
+  "model_name": "effnet_global",
+  "timestamp": "2026-02-26 06:03:14",
+  "federated_round": 3,
+  "classification": {
+    "accuracy": 0.5,
+    "f1_macro": 0.499444,
+    "f1_weighted": 0.503337,
+    "f1_per_class": {
+      "Real": 0.482759,
+      "Fake": 0.516129
+    },
+    "precision_macro": 0.52,
+    "recall_macro": 0.520564,
+    "roc_auc": 0.509401,
+    "confusion_matrix": [
+      [
+        28,
+        18
+      ],
+      [
+        42,
+        32
+      ]
+    ],
+    "num_samples": 120
+  },
+  "latency": {
+    "mean_ms": 8.0491,
+    "std_ms": 1.3762,
+    "min_ms": 6.4228,
+    "max_ms": 10.2043,
+    "p50_ms": 7.8807,
+    "p95_ms": 9.9415,
+    "p99_ms": 10.1517,
+    "num_batches": 5,
+    "batch_size": 16,
+    "total_samples": 72
+  },
+  "model_size": {
+    "total_params": 1089,
+    "trainable_params": 1089,
+    "non_trainable_params": 0,
+    "file_size_bytes": 28000,
+    "file_size_mb": 0.0267
+  },
+  "extra": {
+    "accepted": 4,
+    "rejected": 0,
+    "distillation_loss": 0.20629537403583526
+  }
+}
