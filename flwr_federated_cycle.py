@@ -19,6 +19,7 @@ strategy that integrates the thesis enhancements.
 from __future__ import annotations
 
 import json
+import os
 import logging
 import time
 import gc
@@ -31,9 +32,11 @@ import tensorflow as tf
 
 try:
     import flwr as fl
+    from flwr.common import Context
     from flwr.common import FitIns, ndarrays_to_parameters, parameters_to_ndarrays
 except ImportError:
     fl = None  # type: ignore[assignment]
+    Context = Any  # type: ignore[misc,assignment]
 
 from enhanced_client_selection import (
     ClientMetrics,
@@ -266,6 +269,7 @@ class FLWRClient(fl.client.NumPyClient):
     ) -> None:
         _require_flwr()
         self.client_id = client_id
+        self.model_fn = model_fn
         self.model = model_fn()
         self.train_data = train_data
         self.batch_size = batch_size
@@ -275,6 +279,15 @@ class FLWRClient(fl.client.NumPyClient):
         self._cached_train = None
         self._base_train_data = None
         self._num_examples = None
+        self._compiled_lr = None
+
+    def _rebuild_model(self, weights: List[np.ndarray]) -> None:
+        # Release graph/device allocations before rebuilding to mitigate
+        # allocator fragmentation after repeated OOM retries.
+        tf.keras.backend.clear_session()
+        gc.collect()
+        self.model = self.model_fn()
+        self.model.set_weights(weights)
         self._compiled_lr = None
 
     def _parse_tfrecord_example(
@@ -381,6 +394,7 @@ class FLWRClient(fl.client.NumPyClient):
                     raise
                 last_exc = exc
                 next_batch = max(1, effective_batch_size // 2)
+                current_weights = self.model.get_weights()
                 logger.warning(
                     "Client %s OOM at batch_size=%d, retrying with batch_size=%d",
                     self.client_id,
@@ -390,7 +404,7 @@ class FLWRClient(fl.client.NumPyClient):
                 effective_batch_size = next_batch
                 self._cached_train = None
                 self._cached_batch_size = None
-                gc.collect()
+                self._rebuild_model(current_weights)
         else:
             raise RuntimeError(
                 f"Client {self.client_id} failed to train due to OOM. Last error: {last_exc}"
@@ -970,9 +984,23 @@ class FLWRFederatedLearningCycle:
         local_batch_size = int(cfg.local_batch_size)
         input_shape = tuple(cfg.input_shape)
 
-        def _client_fn(cid: str):
+        def _client_fn(context: Context):
+            # Flower Context carries partition-id in node_config for simulation.
+            node_cfg = getattr(context, "node_config", {}) or {}
+            cid = str(node_cfg.get("partition-id", "0"))
+            if cid not in client_data_map:
+                # Backward-safe fallback for older runtimes.
+                cid = str(getattr(context, "cid", cid))
+
+            # Allow XLA conv algo fallback when autotuning is too strict under
+            # constrained multi-process GPU memory conditions.
+            xla_flags = os.environ.get("XLA_FLAGS", "")
+            if "xla_gpu_strict_conv_algorithm_picker=false" not in xla_flags:
+                suffix = "--xla_gpu_strict_conv_algorithm_picker=false"
+                os.environ["XLA_FLAGS"] = f"{xla_flags} {suffix}".strip()
+
             dataset = client_data_map[cid]
-            return FLWRClient(
+            np_client = FLWRClient(
                 client_id=cid,
                 model_fn=_build_client_model,
                 train_data=dataset,
@@ -980,6 +1008,7 @@ class FLWRFederatedLearningCycle:
                 input_shape=input_shape,
                 compression_type="GZIP",
             )
+            return np_client.to_client()
 
         start = time.time()
         fl.simulation.start_simulation(
