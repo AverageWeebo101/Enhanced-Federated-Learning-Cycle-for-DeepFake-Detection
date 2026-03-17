@@ -23,7 +23,7 @@ import logging
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import tensorflow as tf
@@ -258,34 +258,81 @@ class FLWRClient(fl.client.NumPyClient):
         self,
         client_id: str,
         model_fn: callable,
-        train_data: tf.data.Dataset,
+        train_data: Union[tf.data.Dataset, str],
         batch_size: int,
+        input_shape: Tuple[int, ...],
+        compression_type: str = "GZIP",
     ) -> None:
         _require_flwr()
         self.client_id = client_id
         self.model = model_fn()
         self.train_data = train_data
         self.batch_size = batch_size
+        self.input_shape = tuple(input_shape)
+        self.compression_type = compression_type
         self._cached_batch_size = None
         self._cached_train = None
+        self._base_train_data = None
         self._num_examples = None
         self._compiled_lr = None
 
+    def _parse_tfrecord_example(
+        self,
+        example_proto: tf.Tensor,
+    ) -> Tuple[tf.Tensor, tf.Tensor]:
+        feature_desc = {
+            "image/encoded": tf.io.FixedLenFeature([], tf.string),
+            "image/format": tf.io.FixedLenFeature([], tf.string),
+            "label": tf.io.FixedLenFeature([], tf.float32),
+        }
+        parsed = tf.io.parse_single_example(example_proto, feature_desc)
+
+        image = tf.io.decode_jpeg(parsed["image/encoded"], channels=3)
+        image = tf.image.resize(image, tuple(self.input_shape[:2]))
+        image = tf.cast(image, tf.float32)
+
+        label = tf.cast(parsed["label"], tf.float32)
+        return image, label
+
+    def _get_base_train_data(self) -> tf.data.Dataset:
+        if self._base_train_data is not None:
+            return self._base_train_data
+
+        if isinstance(self.train_data, tf.data.Dataset):
+            self._base_train_data = self.train_data
+            return self._base_train_data
+
+        if isinstance(self.train_data, str):
+            ds = tf.data.TFRecordDataset(
+                self.train_data,
+                compression_type=self.compression_type,
+                num_parallel_reads=tf.data.AUTOTUNE,
+            )
+            ds = ds.map(self._parse_tfrecord_example, num_parallel_calls=tf.data.AUTOTUNE)
+            self._base_train_data = ds
+            return self._base_train_data
+
+        raise TypeError(
+            f"Unsupported client train_data type: {type(self.train_data).__name__}"
+        )
+
     def _get_train_data(self, batch_size: int) -> tf.data.Dataset:
         if self._cached_train is None or self._cached_batch_size != batch_size:
+            base_train = self._get_base_train_data()
             self._cached_train = (
-                self.train_data.batch(batch_size).prefetch(tf.data.AUTOTUNE)
+                base_train.batch(batch_size).prefetch(tf.data.AUTOTUNE)
             )
             self._cached_batch_size = batch_size
         return self._cached_train
 
     def _num_train_examples(self) -> int:
         if self._num_examples is None:
-            card = tf.data.experimental.cardinality(self.train_data).numpy()
+            base_train = self._get_base_train_data()
+            card = tf.data.experimental.cardinality(base_train).numpy()
             if card > 0:
                 self._num_examples = int(card)
             else:
-                self._num_examples = sum(1 for _ in self.train_data)
+                self._num_examples = sum(1 for _ in base_train)
         return int(self._num_examples)
 
     def get_parameters(self, config: Dict[str, Any]) -> List[np.ndarray]:
@@ -621,7 +668,7 @@ class FLWRFederatedLearningCycle:
         self.config = config or FLWRCycleConfig()
         self.global_model: Optional[tf.keras.Model] = None
         self.clients: Dict[str, FederatedClient] = {}
-        self.client_datasets: Dict[str, tf.data.Dataset] = {}
+        self.client_datasets: Dict[str, Union[tf.data.Dataset, str]] = {}
 
         self.reputation_ledger: Optional[ClientReputationLedger] = None
         self.basic_ledger: Optional[ReputationLedger] = None
@@ -701,14 +748,29 @@ class FLWRFederatedLearningCycle:
 
     def create_clients(
         self,
-        client_data: Dict[str, tf.data.Dataset],
+        client_data: Dict[str, Union[tf.data.Dataset, str]],
     ) -> Dict[str, FederatedClient]:
         rng = np.random.RandomState(42)
         clients: Dict[str, FederatedClient] = {}
 
-        for cid, local_ds in client_data.items():
-            card = tf.data.experimental.cardinality(local_ds).numpy()
-            n_samples = int(card) if card > 0 else sum(1 for _ in local_ds)
+        for cid, local_data in client_data.items():
+            if isinstance(local_data, tf.data.Dataset):
+                card = tf.data.experimental.cardinality(local_data).numpy()
+                n_samples = int(card) if card > 0 else sum(1 for _ in local_data)
+                local_dataset_for_client = local_data
+            elif isinstance(local_data, str):
+                raw_ds = tf.data.TFRecordDataset(
+                    local_data,
+                    compression_type="GZIP",
+                    num_parallel_reads=tf.data.AUTOTUNE,
+                )
+                n_samples = sum(1 for _ in raw_ds)
+                local_dataset_for_client = None
+            else:
+                raise TypeError(
+                    f"Unsupported client data type for cid={cid}: {type(local_data).__name__}"
+                )
+
             metrics = ClientMetrics(
                 local_validation_metric=float(rng.uniform(0.4, 0.9)),
                 data_volume=n_samples,
@@ -717,7 +779,7 @@ class FLWRFederatedLearningCycle:
             )
             clients[cid] = FederatedClient(
                 client_id=cid,
-                local_data=local_ds,
+                local_data=local_dataset_for_client,
                 metrics=metrics,
             )
 
@@ -867,19 +929,25 @@ class FLWRFederatedLearningCycle:
                 compile=False,
             )
 
+        client_data_map = dict(self.client_datasets)
+        local_batch_size = int(cfg.local_batch_size)
+        input_shape = tuple(cfg.input_shape)
+
         def _client_fn(cid: str):
-            dataset = self.client_datasets[cid]
+            dataset = client_data_map[cid]
             return FLWRClient(
                 client_id=cid,
                 model_fn=_build_client_model,
                 train_data=dataset,
-                batch_size=cfg.local_batch_size,
+                batch_size=local_batch_size,
+                input_shape=input_shape,
+                compression_type="GZIP",
             )
 
         start = time.time()
         fl.simulation.start_simulation(
             client_fn=_client_fn,
-            num_clients=cfg.num_devices,
+            num_clients=len(client_data_map),
             config=fl.server.ServerConfig(num_rounds=rounds_to_run),
             strategy=strategy,
             client_resources={
