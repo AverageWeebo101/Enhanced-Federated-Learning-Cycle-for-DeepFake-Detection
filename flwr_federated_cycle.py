@@ -18,6 +18,7 @@ strategy that integrates the thesis enhancements.
 
 from __future__ import annotations
 
+import json
 import logging
 import time
 from dataclasses import dataclass, field
@@ -152,6 +153,13 @@ class FLWRCycleConfig:
 
     # -- Evaluation & output (Part 5) --------------------------------- #
     reports_dir: str = "reports"
+    enable_round_checkpoints: bool = True
+    checkpoints_dir: str = "reports/checkpoints_flwr"
+    checkpoint_every: int = 1
+    simulation_client_cpus: float = 2.0
+    simulation_client_gpus: float = 0.0
+    simulation_local_mode: bool = False
+    auto_resume_from_checkpoint: bool = True
     tflite_output_path: str = "effnet_global_flwr_final.tflite"
     input_shape: Tuple[int, ...] = (224, 224, 3)
 
@@ -355,6 +363,8 @@ class EnhancedFlowerStrategy(fl.server.strategy.Strategy):
         test_data: tf.data.Dataset,
         proxy_data: Optional[tf.data.Dataset] = None,
         supervised_data: Optional[tf.data.Dataset] = None,
+        round_offset: int = 0,
+        total_rounds_target: Optional[int] = None,
     ) -> None:
         _require_flwr()
         self.config = config
@@ -368,6 +378,8 @@ class EnhancedFlowerStrategy(fl.server.strategy.Strategy):
         self.test_data = test_data
         self.proxy_data = proxy_data
         self.supervised_data = supervised_data
+        self.round_offset = int(round_offset)
+        self.total_rounds_target = int(total_rounds_target or config.global_rounds)
         self._current_weights = global_model.get_weights()
 
         self.history: Dict[str, list] = {
@@ -378,6 +390,44 @@ class EnhancedFlowerStrategy(fl.server.strategy.Strategy):
             "num_rejected": [],
             "distillation_loss": [],
         }
+        self.last_failures: List[str] = []
+
+    def _save_round_checkpoint(
+        self,
+        server_round: int,
+        enhanced_acc: float,
+        num_accepted: int,
+        num_rejected: int,
+        distill_loss: Optional[float],
+    ) -> None:
+        if not self.config.enable_round_checkpoints:
+            return
+
+        every = max(1, int(self.config.checkpoint_every))
+        if server_round % every != 0:
+            return
+
+        root_dir = Path(self.config.checkpoints_dir)
+        round_dir = root_dir / f"round_{server_round:03d}"
+        round_dir.mkdir(parents=True, exist_ok=True)
+
+        model_path = round_dir / "global_model.keras"
+        self.global_model.save(model_path)
+
+        metadata = {
+            "round": int(server_round),
+            "enhanced_accuracy": float(enhanced_acc),
+            "num_accepted": int(num_accepted),
+            "num_rejected": int(num_rejected),
+            "distillation_loss": (None if distill_loss is None else float(distill_loss)),
+            "model_path": str(model_path),
+            "created_at_epoch": time.time(),
+        }
+        (round_dir / "metadata.json").write_text(
+            json.dumps(metadata, indent=2),
+            encoding="utf-8",
+        )
+        logger.info("Saved checkpoint: %s", model_path)
 
     # ------------------------------------------------------------------ #
     #  Strategy API                                                      #
@@ -388,10 +438,11 @@ class EnhancedFlowerStrategy(fl.server.strategy.Strategy):
         return ndarrays_to_parameters(self._current_weights)
 
     def configure_fit(self, server_round, parameters, client_manager):
+        abs_round = self.round_offset + int(server_round)
         self._current_weights = parameters_to_ndarrays(parameters)
 
         available = client_manager.all()
-        selected = self.selector.select(current_round=server_round)
+        selected = self.selector.select(current_round=abs_round)
         selected_ids = [c.client_id for c in selected if c.client_id in available]
 
         if len(selected_ids) < self.config.clients_per_round:
@@ -412,8 +463,20 @@ class EnhancedFlowerStrategy(fl.server.strategy.Strategy):
         return instructions
 
     def aggregate_fit(self, server_round, results, failures):
+        abs_round = self.round_offset + int(server_round)
+        self.last_failures = []
+        if failures:
+            for failure in failures:
+                self.last_failures.append(repr(failure))
+            logger.error(
+                "Round %d had %d client failures. First failure: %s",
+                server_round,
+                len(self.last_failures),
+                self.last_failures[0],
+            )
+
         if not results:
-            logger.warning("No client results to aggregate in round %d.", server_round)
+            logger.warning("No client results to aggregate in round %d.", abs_round)
             return None, {}
 
         # Update local metrics from clients
@@ -435,7 +498,7 @@ class EnhancedFlowerStrategy(fl.server.strategy.Strategy):
                 client_obj.metrics.inference_latency = float(
                     metrics.get("inference_latency", client_obj.metrics.inference_latency)
                 )
-                client_obj.metrics.last_selected_round = server_round
+                client_obj.metrics.last_selected_round = abs_round
 
         # Validate and aggregate updates
         self.global_model.set_weights(self._current_weights)
@@ -478,7 +541,7 @@ class EnhancedFlowerStrategy(fl.server.strategy.Strategy):
                 distill_loss = kd_history.get("loss_total", [None])[-1]
 
         # Reputation updates
-        update_ledger_from_records(self.reputation_ledger, records, server_round)
+        update_ledger_from_records(self.reputation_ledger, records, abs_round)
         self.validator.update_reputations(records)
 
         # Sync ledger back to selector
@@ -493,7 +556,7 @@ class EnhancedFlowerStrategy(fl.server.strategy.Strategy):
         enhanced_acc = float(enhanced_result.get("accuracy", 0.0))
 
         # History
-        self.history["round"].append(server_round)
+        self.history["round"].append(abs_round)
         self.history["enhanced_accuracy"].append(enhanced_acc)
         self.history["selected_clients"].append(list(client_updates.keys()))
         self.history["num_accepted"].append(num_accepted)
@@ -501,18 +564,30 @@ class EnhancedFlowerStrategy(fl.server.strategy.Strategy):
         self.history["distillation_loss"].append(distill_loss)
 
         # Periodic full evaluation and report
-        if server_round == 1 or server_round == self.config.global_rounds or server_round % self.config.eval_every == 0:
+        if (
+            server_round == 1
+            or abs_round == self.total_rounds_target
+            or abs_round % self.config.eval_every == 0
+        ):
             report = self.evaluator.evaluate(
                 test_data=self.test_data,
                 batch_size=self.config.local_batch_size,
-                federated_round=server_round,
+                federated_round=abs_round,
                 extra_info={
                     "enhanced_acc": enhanced_acc,
                     "accepted": num_accepted,
                     "rejected": num_rejected,
                 },
             )
-            self.evaluator.save_report(report, tag=f"flwr_round_{server_round:03d}")
+            self.evaluator.save_report(report, tag=f"flwr_round_{abs_round:03d}")
+
+        self._save_round_checkpoint(
+            server_round=abs_round,
+            enhanced_acc=enhanced_acc,
+            num_accepted=num_accepted,
+            num_rejected=num_rejected,
+            distill_loss=distill_loss,
+        )
 
         self._current_weights = enhanced_weights
         params = ndarrays_to_parameters(enhanced_weights)
@@ -581,6 +656,48 @@ class FLWRFederatedLearningCycle:
         )
         self.global_model = model
         return model
+
+    def _load_model_from_path(self, model_path: str) -> tf.keras.Model:
+        from tensorflow.keras.applications.efficientnet import (
+            preprocess_input as _effnet_preprocess,
+        )
+
+        model = tf.keras.models.load_model(
+            model_path,
+            custom_objects={"preprocess_input": _effnet_preprocess},
+            compile=False,
+        )
+        model.compile(
+            optimizer=tf.keras.optimizers.Adam(self.config.local_lr),
+            loss="binary_crossentropy",
+            metrics=["accuracy"],
+        )
+        return model
+
+    def _find_latest_checkpoint(self) -> Tuple[int, Optional[Path]]:
+        root = Path(self.config.checkpoints_dir)
+        if not root.exists():
+            return 0, None
+
+        best_round = 0
+        best_model_path: Optional[Path] = None
+        for round_dir in root.glob("round_*"):
+            if not round_dir.is_dir():
+                continue
+            try:
+                round_num = int(round_dir.name.split("_")[-1])
+            except ValueError:
+                continue
+
+            model_path = round_dir / "global_model.keras"
+            if not model_path.exists():
+                continue
+
+            if round_num > best_round:
+                best_round = round_num
+                best_model_path = model_path
+
+        return best_round, best_model_path
 
     def create_clients(
         self,
@@ -663,9 +780,47 @@ class FLWRFederatedLearningCycle:
         assert self.reputation_ledger is not None
         assert self.evaluator is not None
 
+        total_rounds_target = int(cfg.global_rounds)
+        round_offset = 0
+        if cfg.auto_resume_from_checkpoint:
+            ckpt_round, ckpt_model_path = self._find_latest_checkpoint()
+            if ckpt_model_path is not None:
+                logger.info(
+                    "Auto-resume: loading checkpoint from round %d at %s",
+                    ckpt_round,
+                    ckpt_model_path,
+                )
+                self.global_model = self._load_model_from_path(str(ckpt_model_path))
+                round_offset = int(ckpt_round)
+                self.evaluator.model = self.global_model
+                self.validator.global_model = self.global_model
+            else:
+                logger.info("Auto-resume: no checkpoint found, starting fresh run.")
+
+        rounds_to_run = max(0, total_rounds_target - round_offset)
+        if rounds_to_run == 0:
+            logger.info(
+                "Requested %d total rounds and checkpoint already at round %d. Nothing to run.",
+                total_rounds_target,
+                round_offset,
+            )
+            self.history = {
+                "round": [],
+                "enhanced_accuracy": [],
+                "selected_clients": [],
+                "num_accepted": [],
+                "num_rejected": [],
+                "distillation_loss": [],
+            }
+            return self.history
+
         logger.info(
-            "FL Cycle (Flower): %d devices, %d rounds, %d local epochs",
-            cfg.num_devices, cfg.global_rounds, cfg.local_epochs,
+            "FL Cycle (Flower): %d devices, %d rounds to run (%d target, offset=%d), %d local epochs",
+            cfg.num_devices,
+            rounds_to_run,
+            total_rounds_target,
+            round_offset,
+            cfg.local_epochs,
         )
 
         baseline_report = self.evaluator.evaluate(
@@ -694,13 +849,29 @@ class FLWRFederatedLearningCycle:
             test_data=test_data,
             proxy_data=proxy_data,
             supervised_data=supervised_data,
+            round_offset=round_offset,
+            total_rounds_target=total_rounds_target,
         )
+
+        from tensorflow.keras.applications.efficientnet import (
+            preprocess_input as _effnet_preprocess,
+        )
+        _custom = {"preprocess_input": _effnet_preprocess}
+
+        def _build_client_model() -> tf.keras.Model:
+            # Build from disk to avoid serializing the in-memory global model
+            # into Ray actors.
+            return tf.keras.models.load_model(
+                cfg.model_path,
+                custom_objects=_custom,
+                compile=False,
+            )
 
         def _client_fn(cid: str):
             dataset = self.client_datasets[cid]
             return FLWRClient(
                 client_id=cid,
-                model_fn=lambda: tf.keras.models.clone_model(self.global_model),
+                model_fn=_build_client_model,
                 train_data=dataset,
                 batch_size=cfg.local_batch_size,
             )
@@ -709,11 +880,35 @@ class FLWRFederatedLearningCycle:
         fl.simulation.start_simulation(
             client_fn=_client_fn,
             num_clients=cfg.num_devices,
-            config=fl.server.ServerConfig(num_rounds=cfg.global_rounds),
+            config=fl.server.ServerConfig(num_rounds=rounds_to_run),
             strategy=strategy,
+            client_resources={
+                "num_cpus": float(cfg.simulation_client_cpus),
+                "num_gpus": float(cfg.simulation_client_gpus),
+            },
+            ray_init_args={
+                "include_dashboard": False,
+                "ignore_reinit_error": True,
+                "local_mode": bool(cfg.simulation_local_mode),
+            },
         )
         elapsed = time.time() - start
         logger.info("Cycle complete -> %.1fs", elapsed)
+
+        self.history = strategy.history
+        if not self.history.get("round"):
+            failure_hint = ""
+            if getattr(strategy, "last_failures", None):
+                failure_hint = (
+                    " Last Flower client failure: "
+                    f"{strategy.last_failures[0]}"
+                )
+            raise RuntimeError(
+                "Flower simulation completed with zero successful rounds. "
+                "In constrained environments, reduce clients_per_round/num_devices, "
+                "lower simulation_client_cpus, or set simulation_local_mode=True."
+                + failure_hint
+            )
 
         # Save ledger
         ledger_path = Path(cfg.reports_dir) / "reputation_ledger_flwr_final.json"
@@ -727,7 +922,6 @@ class FLWRFederatedLearningCycle:
             quantise=True,
         )
 
-        self.history = strategy.history
         self._print_summary()
         return self.history
 
