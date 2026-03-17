@@ -21,6 +21,7 @@ from __future__ import annotations
 import json
 import logging
 import time
+import gc
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -338,6 +339,15 @@ class FLWRClient(fl.client.NumPyClient):
     def get_parameters(self, config: Dict[str, Any]) -> List[np.ndarray]:
         return self.model.get_weights()
 
+    @staticmethod
+    def _is_oom_error(exc: BaseException) -> bool:
+        msg = str(exc).lower()
+        return (
+            "resource_exhausted" in msg
+            or "out of memory" in msg
+            or "cuda_error_out_of_memory" in msg
+        )
+
     def fit(
         self,
         parameters: List[np.ndarray],
@@ -356,12 +366,38 @@ class FLWRClient(fl.client.NumPyClient):
 
         batch_size = int(config.get("batch_size", self.batch_size))
         local_epochs = int(config.get("local_epochs", 1))
-        train_data = self._get_train_data(batch_size)
+        effective_batch_size = max(1, batch_size)
+        last_exc: Optional[BaseException] = None
 
-        t0 = time.perf_counter()
-        self.model.fit(train_data, epochs=local_epochs, verbose=0)
-        elapsed = time.perf_counter() - t0
+        while effective_batch_size >= 1:
+            train_data = self._get_train_data(effective_batch_size)
+            try:
+                t0 = time.perf_counter()
+                self.model.fit(train_data, epochs=local_epochs, verbose=0)
+                elapsed = time.perf_counter() - t0
+                break
+            except (tf.errors.ResourceExhaustedError, tf.errors.UnknownError) as exc:
+                if not self._is_oom_error(exc) or effective_batch_size == 1:
+                    raise
+                last_exc = exc
+                next_batch = max(1, effective_batch_size // 2)
+                logger.warning(
+                    "Client %s OOM at batch_size=%d, retrying with batch_size=%d",
+                    self.client_id,
+                    effective_batch_size,
+                    next_batch,
+                )
+                effective_batch_size = next_batch
+                self._cached_train = None
+                self._cached_batch_size = None
+                gc.collect()
+        else:
+            raise RuntimeError(
+                f"Client {self.client_id} failed to train due to OOM. Last error: {last_exc}"
+            )
 
+        # Evaluate with the effective batch size used for fit.
+        train_data = self._get_train_data(effective_batch_size)
         result = self.model.evaluate(train_data, verbose=0, return_dict=True)
         local_acc = float(result.get("accuracy", 0.0))
 
@@ -370,6 +406,7 @@ class FLWRClient(fl.client.NumPyClient):
             "local_accuracy": local_acc,
             "data_volume": float(num_examples),
             "inference_latency": float(elapsed / max(num_examples, 1)),
+            "effective_batch_size": float(effective_batch_size),
         }
         return self.model.get_weights(), num_examples, metrics
 
