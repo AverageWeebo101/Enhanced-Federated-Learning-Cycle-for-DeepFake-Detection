@@ -42,10 +42,7 @@ Recommended runtime: **Google Colab** (TFF pre-installed).
 
 """
 
-
-
 from __future__ import annotations
-
 
 
 import logging
@@ -53,12 +50,9 @@ import logging
 from typing import Dict, List, Optional, Tuple
 
 
-
 import numpy as np
 
 import tensorflow as tf
-
-
 
 # ---------- Conditional TFF import ------------------------------------- #
 
@@ -87,7 +81,6 @@ except ImportError:
         TFF_AVAILABLE = False
 
 
-
 # ---------------------------------------------------------------------------
 
 # Logging
@@ -95,17 +88,11 @@ except ImportError:
 # ---------------------------------------------------------------------------
 
 logging.basicConfig(
-
     level=logging.INFO,
-
     format="%(asctime)s | %(levelname)-8s | %(message)s",
-
 )
 
 logger = logging.getLogger(__name__)
-
-
-
 
 
 # ====================================================================== #
@@ -115,29 +102,18 @@ logger = logging.getLogger(__name__)
 # ====================================================================== #
 
 
-
 def _require_tff() -> None:
-
     """Raise a clear error if neither the Flower adapter nor TFF is available."""
 
     if not TFF_AVAILABLE:
 
         raise RuntimeError(
-
             "Neither the Flower adapter (flwr_adapter) nor TensorFlow Federated\n"
-
             "is available in this environment.\n"
-
             "Install Flower with:  pip install flwr\n"
-
             "The flwr_adapter module provides a drop-in replacement for TFF.\n"
-
             "Alternatively, install TFF:  pip install tensorflow-federated==0.48.0"
-
         )
-
-
-
 
 
 # ====================================================================== #
@@ -147,9 +123,7 @@ def _require_tff() -> None:
 # ====================================================================== #
 
 
-
 class TFFDataManager:
-
     """
 
     Manages federated data for TFF integration.
@@ -178,13 +152,9 @@ class TFFDataManager:
 
     """
 
-
-
     def __init__(self, input_shape: Tuple[int, ...]) -> None:
 
         self.input_shape = input_shape
-
-
 
     # ------------------------------------------------------------------ #
 
@@ -192,10 +162,7 @@ class TFFDataManager:
 
     # ------------------------------------------------------------------ #
 
-
-
     def get_element_spec(self) -> Tuple[tf.TensorSpec, tf.TensorSpec]:
-
         """
 
         Return the **batched** element spec for ``from_keras_model()``.
@@ -209,28 +176,17 @@ class TFFDataManager:
         """
 
         return (
-
             tf.TensorSpec(shape=(None, *self.input_shape), dtype=tf.float32),
-
             tf.TensorSpec(shape=(None,), dtype=tf.float32),
-
         )
 
-
-
     def get_unbatched_spec(self) -> Tuple[tf.TensorSpec, tf.TensorSpec]:
-
         """Per-example spec (no batch dim) — useful for type annotations."""
 
         return (
-
             tf.TensorSpec(shape=self.input_shape, dtype=tf.float32),
-
             tf.TensorSpec(shape=(), dtype=tf.float32),
-
         )
-
-
 
     # ------------------------------------------------------------------ #
 
@@ -238,24 +194,14 @@ class TFFDataManager:
 
     # ------------------------------------------------------------------ #
 
-
-
     def make_federated_data(
-
         self,
-
         client_datasets: Dict[str, tf.data.Dataset],
-
         selected_ids: List[str],
-
         batch_size: int = 32,
-
         local_epochs: int = 1,
-
         shuffle_buffer: int = 1000,
-
     ) -> List[tf.data.Dataset]:
-
         """
 
         Create a **list of batched datasets** for TFF's
@@ -315,24 +261,16 @@ class TFFDataManager:
                 continue
 
             ds = (
-
                 client_datasets[cid]
-
                 .repeat(local_epochs)
-
                 .shuffle(buffer_size=shuffle_buffer)
-
                 .batch(batch_size)
-
                 .prefetch(1)
-
             )
 
             federated.append(ds)
 
         return federated
-
-
 
     # ------------------------------------------------------------------ #
 
@@ -340,16 +278,10 @@ class TFFDataManager:
 
     # ------------------------------------------------------------------ #
 
-
-
     def create_tff_client_data(
-
         self,
-
         client_datasets: Dict[str, tf.data.Dataset],
-
     ):
-
         """
 
         Wrap per-client datasets into ``tff.simulation.datasets.ClientData``
@@ -370,39 +302,24 @@ class TFFDataManager:
 
         _require_tff()
 
-
-
         client_ids = sorted(client_datasets.keys())
 
         local_ref = client_datasets  # captured by closure
 
-
-
         def create_dataset_fn(client_id):
 
             cid = (
-
                 client_id.numpy().decode("utf-8")
-
                 if isinstance(client_id, tf.Tensor)
-
                 else client_id
-
             )
 
             return local_ref[cid]
 
-
-
         return tff.simulation.datasets.ClientData.from_clients_and_tf_fn(
-
             client_ids=client_ids,
-
             serializable_dataset_fn=create_dataset_fn,
-
         )
-
-
 
     # ------------------------------------------------------------------ #
 
@@ -410,22 +327,13 @@ class TFFDataManager:
 
     # ------------------------------------------------------------------ #
 
-
-
     @staticmethod
-
     def preprocess_dataset(
-
         dataset: tf.data.Dataset,
-
         batch_size: int = 32,
-
         local_epochs: int = 1,
-
         shuffle_buffer: int = 1000,
-
     ) -> tf.data.Dataset:
-
         """
 
         Standard preprocessing pipeline applied to each client dataset
@@ -435,21 +343,11 @@ class TFFDataManager:
         """
 
         return (
-
-            dataset
-
-            .repeat(local_epochs)
-
+            dataset.repeat(local_epochs)
             .shuffle(buffer_size=shuffle_buffer)
-
             .batch(batch_size)
-
             .prefetch(1)
-
         )
-
-
-
 
 
 # ====================================================================== #
@@ -459,17 +357,11 @@ class TFFDataManager:
 # ====================================================================== #
 
 
-
 def partition_data_iid_tff(
-
     full_dataset: tf.data.Dataset,
-
     num_clients: int,
-
     seed: int = 42,
-
 ) -> Dict[str, tf.data.Dataset]:
-
     """
 
     IID partition: shuffle the dataset and split evenly across clients.
@@ -514,29 +406,19 @@ def partition_data_iid_tff(
 
         raise ValueError("full_dataset is empty or has unknown cardinality")
 
-
-
     # Keep shuffle buffer modest to avoid buffering huge decoded-image tensors in RAM.
 
     shuffle_buffer = min(total, 512)
 
     shuffled = full_dataset.shuffle(
-
         buffer_size=shuffle_buffer,
-
         seed=seed,
-
         reshuffle_each_iteration=False,
-
     )
-
-
 
     shard_size = max(1, total // num_clients)
 
     partitions: Dict[str, tf.data.Dataset] = {}
-
-
 
     for i in range(num_clients):
 
@@ -546,24 +428,15 @@ def partition_data_iid_tff(
 
         count = shard_size if i < (num_clients - 1) else max(1, total - start)
 
-
-
         if start >= total:
 
             start = start % total
-
-
 
         # Lazy split: no Python list(), no np.stack(), no full-dataset materialization.
 
         partitions[cid] = shuffled.skip(start).take(count)
 
-
-
     return partitions
-
-
-
 
 
 # ====================================================================== #
@@ -573,17 +446,11 @@ def partition_data_iid_tff(
 # ====================================================================== #
 
 
-
 def generate_synthetic_data(
-
     num_samples: int,
-
     input_shape: Tuple[int, ...],
-
     seed: Optional[int] = None,
-
 ) -> tf.data.Dataset:
-
     """
 
     Synthetic labelled dataset ``(image, label)`` for smoke-testing.
@@ -603,19 +470,11 @@ def generate_synthetic_data(
     return tf.data.Dataset.from_tensor_slices((x, y))
 
 
-
-
-
 def generate_proxy_data(
-
     num_samples: int,
-
     input_shape: Tuple[int, ...],
-
     seed: Optional[int] = None,
-
 ) -> tf.data.Dataset:
-
     """Unlabelled proxy data ``(image,)`` for knowledge distillation."""
 
     rng = np.random.RandomState(seed)
@@ -625,9 +484,6 @@ def generate_proxy_data(
     return tf.data.Dataset.from_tensor_slices(x)
 
 
-
-
-
 # ====================================================================== #
 
 #  DEMO / SMOKE-TEST                                                      #
@@ -635,28 +491,21 @@ def generate_proxy_data(
 # ====================================================================== #
 
 
-
 if __name__ == "__main__":
 
     print("\n===  TFF Data Utilities — Demo  ===\n")
 
-
-
-    INPUT_SHAPE = (16,)          # tiny for fast demo
+    INPUT_SHAPE = (16,)  # tiny for fast demo
 
     NUM_CLIENTS = 8
 
-    SAMPLES = NUM_CLIENTS * 30   # 30 per client
-
-
+    SAMPLES = NUM_CLIENTS * 30  # 30 per client
 
     # ---- 1. Synthetic dataset ---------------------------------------- #
 
     full_ds = generate_synthetic_data(SAMPLES, INPUT_SHAPE, seed=10)
 
     print(f"Full dataset: {SAMPLES} samples, shape {INPUT_SHAPE}")
-
-
 
     # ---- 2. Partition ------------------------------------------------ #
 
@@ -668,28 +517,23 @@ if __name__ == "__main__":
 
         print(f"  {cid}: {n} samples")
 
-
-
     # ---- 3. TFF data manager ---------------------------------------- #
 
     dm = TFFDataManager(input_shape=INPUT_SHAPE)
 
-
-
     print(f"\nElement spec (batched): {dm.get_element_spec()}")
 
     print(f"Unbatched spec:        {dm.get_unbatched_spec()}")
-
-
 
     # ---- 4. Make federated data for a round -------------------------- #
 
     selected = ["client_001", "client_003", "client_005"]
 
     fed_data = dm.make_federated_data(
-
-        client_data, selected, batch_size=16, local_epochs=2,
-
+        client_data,
+        selected,
+        batch_size=16,
+        local_epochs=2,
     )
 
     print(f"\nFederated data for {selected}: {len(fed_data)} datasets")
@@ -699,8 +543,6 @@ if __name__ == "__main__":
         n_batches = sum(1 for _ in ds)
 
         print(f"  Client {selected[i]}: {n_batches} batches (2 epochs)")
-
-
 
     # ---- 5. TFF ClientData (requires TFF) ---------------------------- #
 
@@ -715,26 +557,13 @@ if __name__ == "__main__":
     else:
 
         print(
-
             "\n⚠  TFF not installed — skipping ClientData creation.\n"
-
             "   Install: pip install tensorflow-federated==0.48.0\n"
-
             "   See requirements_tff.txt for full compatible stack.\n"
-
             "   Recommended runtime: Google Colab."
-
         )
 
-
-
-
-
-
-
     # ---- 6. Proxy data ----------------------------------------------- #    print("\nDone.")
-
-
 
     proxy = generate_proxy_data(50, INPUT_SHAPE, seed=20)
 

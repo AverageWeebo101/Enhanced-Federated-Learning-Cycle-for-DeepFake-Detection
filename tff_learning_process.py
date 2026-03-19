@@ -58,10 +58,7 @@ See ``requirements_tff.txt`` and ``tff_data_utils.py`` for details.
 
 """
 
-
-
 from __future__ import annotations
-
 
 
 import logging
@@ -71,12 +68,9 @@ from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 
-
 import numpy as np
 
 import tensorflow as tf
-
-
 
 # ---------- Conditional TFF import ------------------------------------- #
 
@@ -105,10 +99,7 @@ except ImportError:
         TFF_AVAILABLE = False
 
 
-
 from tff_data_utils import _require_tff
-
-
 
 # ---------------------------------------------------------------------------
 
@@ -117,17 +108,11 @@ from tff_data_utils import _require_tff
 # ---------------------------------------------------------------------------
 
 logging.basicConfig(
-
     level=logging.INFO,
-
     format="%(asctime)s | %(levelname)-8s | %(message)s",
-
 )
 
 logger = logging.getLogger(__name__)
-
-
-
 
 
 # ====================================================================== #
@@ -137,9 +122,7 @@ logger = logging.getLogger(__name__)
 # ====================================================================== #
 
 
-
 class TFFModelFactory:
-
     """
 
     Creates the ``model_fn`` callable that TFF's learning algorithms
@@ -184,20 +167,12 @@ class TFFModelFactory:
 
     """
 
-
-
     def __init__(
-
         self,
-
         keras_model: tf.keras.Model,
-
         input_spec: Tuple[tf.TensorSpec, tf.TensorSpec],
-
         loss: Optional[tf.keras.losses.Loss] = None,
-
         metrics: Optional[list] = None,
-
     ) -> None:
 
         self._ref_model = keras_model
@@ -208,18 +183,13 @@ class TFFModelFactory:
 
         self._metrics = metrics or [tf.keras.metrics.BinaryAccuracy()]
 
-
-
     # ------------------------------------------------------------------ #
 
     #  model_fn builder                                                   #
 
     # ------------------------------------------------------------------ #
 
-
-
     def create_model_fn(self) -> Callable[[], Any]:
-
         """
 
         Return a **no-args callable** compatible with
@@ -238,8 +208,6 @@ class TFFModelFactory:
 
         _require_tff()
 
-
-
         ref = self._ref_model
 
         spec = self._input_spec
@@ -247,8 +215,6 @@ class TFFModelFactory:
         loss = self._loss
 
         metrics_list = self._metrics
-
-
 
         def model_fn():
 
@@ -261,23 +227,13 @@ class TFFModelFactory:
             keras_clone.build(ref.input_shape)
 
             return tff.learning.models.from_keras_model(
-
                 keras_model=keras_clone,
-
                 input_spec=spec,
-
                 loss=loss,
-
                 metrics=metrics_list,
-
             )
 
-
-
         return model_fn
-
-
-
 
 
 # ====================================================================== #
@@ -287,15 +243,10 @@ class TFFModelFactory:
 # ====================================================================== #
 
 
-
 def tff_weights_to_keras(
-
     model_weights,
-
     keras_model: tf.keras.Model,
-
 ) -> None:
-
     """
 
     Copy TFF ``ModelWeights`` into a Keras model's variables.
@@ -324,8 +275,6 @@ def tff_weights_to_keras(
 
     _require_tff()
 
-
-
     try:
 
         # Preferred: TFF's built-in helper
@@ -351,15 +300,9 @@ def tff_weights_to_keras(
     logger.debug("TFF → Keras weight transfer complete.")
 
 
-
-
-
 def keras_weights_to_tff(
-
     keras_model: tf.keras.Model,
-
 ):
-
     """
 
     Convert Keras model weights to TFF ``ModelWeights``.
@@ -376,22 +319,14 @@ def keras_weights_to_tff(
 
     _require_tff()
 
-
-
     trainable = [v.numpy() for v in keras_model.trainable_variables]
 
     non_trainable = [v.numpy() for v in keras_model.non_trainable_variables]
 
     return tff.learning.models.ModelWeights(
-
         trainable=trainable,
-
         non_trainable=non_trainable,
-
     )
-
-
-
 
 
 # ====================================================================== #
@@ -401,33 +336,23 @@ def keras_weights_to_tff(
 # ====================================================================== #
 
 
-
 @dataclass
-
 class TFFProcessConfig:
-
     """Hyper-parameters for the TFF weighted-FedAvg process."""
 
     client_lr: float = 1e-4
 
     server_lr: float = 0.1
 
-    client_optimizer: str = "adam"     # "adam" | "sgd"
+    client_optimizer: str = "adam"  # "adam" | "sgd"
 
-    server_optimizer: str = "sgd"     # typically SGD with lr=1.0
-
-
-
+    server_optimizer: str = "sgd"  # typically SGD with lr=1.0
 
 
 def build_tff_learning_process(
-
     model_fn: Callable[[], Any],
-
     config: Optional[TFFProcessConfig] = None,
-
 ):
-
     """
 
     Build a TFF ``LearningProcess`` using weighted Federated Averaging.
@@ -478,8 +403,6 @@ def build_tff_learning_process(
 
     config = config or TFFProcessConfig()
 
-
-
     def client_optimizer_fn():
 
         if config.client_optimizer == "adam":
@@ -487,8 +410,6 @@ def build_tff_learning_process(
             return tf.keras.optimizers.Adam(config.client_lr)
 
         return tf.keras.optimizers.SGD(config.client_lr)
-
-
 
     def server_optimizer_fn():
 
@@ -498,36 +419,21 @@ def build_tff_learning_process(
 
         return tf.keras.optimizers.SGD(config.server_lr)
 
-
-
     process = tff.learning.algorithms.build_weighted_fed_avg(
-
         model_fn=model_fn,
-
         client_optimizer_fn=client_optimizer_fn,
-
         server_optimizer_fn=server_optimizer_fn,
-
     )
 
-
-
     logger.info(
-
-        "TFF LearningProcess built — client_opt=%s(lr=%g), "
-
-        "server_opt=%s(lr=%g).",
-
-        config.client_optimizer, config.client_lr,
-
-        config.server_optimizer, config.server_lr,
-
+        "TFF LearningProcess built — client_opt=%s(lr=%g), " "server_opt=%s(lr=%g).",
+        config.client_optimizer,
+        config.client_lr,
+        config.server_optimizer,
+        config.server_lr,
     )
 
     return process
-
-
-
 
 
 # ====================================================================== #
@@ -537,9 +443,7 @@ def build_tff_learning_process(
 # ====================================================================== #
 
 
-
 class TFFRoundExecutor:
-
     """
 
     Thin wrapper around a TFF ``LearningProcess`` that handles state
@@ -584,16 +488,10 @@ class TFFRoundExecutor:
 
     """
 
-
-
     def __init__(
-
         self,
-
-        process,                        # tff.learning.templates.LearningProcess
-
+        process,  # tff.learning.templates.LearningProcess
         keras_model: tf.keras.Model,
-
     ) -> None:
 
         _require_tff()
@@ -606,18 +504,13 @@ class TFFRoundExecutor:
 
         self._round_count = 0
 
-
-
     # ------------------------------------------------------------------ #
 
     #  Initialisation                                                     #
 
     # ------------------------------------------------------------------ #
 
-
-
     def initialize(self) -> None:
-
         """
 
         Call TFF's ``process.initialize()`` to create the initial server
@@ -632,10 +525,7 @@ class TFFRoundExecutor:
 
         logger.info("TFF process initialised (random server weights).")
 
-
-
     def inject_pretrained_weights(self) -> None:
-
         """
 
         Inject the weights from ``self.keras_model`` into the TFF server
@@ -654,24 +544,16 @@ class TFFRoundExecutor:
 
         logger.info("Pre-trained Keras weights injected into TFF state.")
 
-
-
     # ------------------------------------------------------------------ #
 
     #  Round execution                                                    #
 
     # ------------------------------------------------------------------ #
 
-
-
     def execute_round(
-
         self,
-
         federated_data: List[tf.data.Dataset],
-
     ) -> Dict[str, Any]:
-
         """
 
         Execute one TFF federated round (broadcast → local training →
@@ -704,31 +586,23 @@ class TFFRoundExecutor:
 
         assert self.state is not None, "Call initialize() first."
 
-
-
         result = self.process.next(self.state, federated_data)
 
         self.state = result.state
 
         self._round_count += 1
 
-
-
         # Extract metrics — TFF returns nested OrderedDicts
 
         metrics = _flatten_tff_metrics(result.metrics)
 
         logger.info(
-
             "TFF round %d complete — %s",
-
-            self._round_count, _format_metrics(metrics),
-
+            self._round_count,
+            _format_metrics(metrics),
         )
 
         return metrics
-
-
 
     # ------------------------------------------------------------------ #
 
@@ -736,10 +610,7 @@ class TFFRoundExecutor:
 
     # ------------------------------------------------------------------ #
 
-
-
     def get_keras_weights(self) -> List[np.ndarray]:
-
         """
 
         Extract model weights from the TFF state and set them on the
@@ -760,10 +631,7 @@ class TFFRoundExecutor:
 
         return self.keras_model.get_weights()
 
-
-
     def set_keras_weights(self, weights: List[np.ndarray]) -> None:
-
         """
 
         Inject (possibly enhanced) Keras weights back into the TFF
@@ -780,16 +648,10 @@ class TFFRoundExecutor:
 
         logger.debug("Enhanced weights injected into TFF state.")
 
-
-
     def get_tff_model_weights(self):
-
         """Return the raw TFF ``ModelWeights`` from the current state."""
 
         return self.process.get_model_weights(self.state)
-
-
-
 
 
 # ====================================================================== #
@@ -799,9 +661,7 @@ class TFFRoundExecutor:
 # ====================================================================== #
 
 
-
 def _flatten_tff_metrics(metrics_struct) -> Dict[str, float]:
-
     """
 
     Flatten TFF's nested ``OrderedDict`` metrics into a simple dict.
@@ -834,8 +694,6 @@ def _flatten_tff_metrics(metrics_struct) -> Dict[str, float]:
 
     flat: Dict[str, float] = {}
 
-
-
     def _walk(obj, prefix: str = "") -> None:
 
         if isinstance(obj, dict):
@@ -866,8 +724,6 @@ def _flatten_tff_metrics(metrics_struct) -> Dict[str, float]:
 
                 flat[key] = str(obj)
 
-
-
     try:
 
         _walk(metrics_struct)
@@ -879,21 +735,14 @@ def _flatten_tff_metrics(metrics_struct) -> Dict[str, float]:
     return flat
 
 
-
-
-
 def _format_metrics(metrics: Dict[str, float], max_items: int = 5) -> str:
-
     """Compact single-line metrics string for logging."""
 
     items = list(metrics.items())[:max_items]
 
-    return ", ".join(f"{k}={v:.4f}" if isinstance(v, float) else f"{k}={v}"
-
-                     for k, v in items)
-
-
-
+    return ", ".join(
+        f"{k}={v:.4f}" if isinstance(v, float) else f"{k}={v}" for k, v in items
+    )
 
 
 # ====================================================================== #
@@ -903,48 +752,41 @@ def _format_metrics(metrics: Dict[str, float], max_items: int = 5) -> str:
 # ====================================================================== #
 
 
-
 if __name__ == "__main__":
 
     print("\n===  TFF Learning Process — Demo  ===\n")
-
-
 
     np.random.seed(42)
 
     tf.random.set_seed(42)
 
-
-
     # ---- 1. Build a tiny reference model ----------------------------- #
 
     INPUT_DIM = 16
 
-    ref_model = tf.keras.Sequential([
-
-        tf.keras.layers.Input(shape=(INPUT_DIM,)),
-
-        tf.keras.layers.Dense(32, activation="relu"),
-
-        tf.keras.layers.Dense(16, activation="relu"),
-
-        tf.keras.layers.Dense(1, activation="sigmoid"),
-
-    ])
+    ref_model = tf.keras.Sequential(
+        [
+            tf.keras.layers.Input(shape=(INPUT_DIM,)),
+            tf.keras.layers.Dense(32, activation="relu"),
+            tf.keras.layers.Dense(16, activation="relu"),
+            tf.keras.layers.Dense(1, activation="sigmoid"),
+        ]
+    )
 
     # Do NOT compile — TFF handles compilation internally
 
-    print(f"Reference model: {ref_model.count_params()} params, "
-
-          f"input shape {ref_model.input_shape}")
-
-
+    print(
+        f"Reference model: {ref_model.count_params()} params, "
+        f"input shape {ref_model.input_shape}"
+    )
 
     # ---- 2. Element spec --------------------------------------------- #
 
-    from tff_data_utils import TFFDataManager, generate_synthetic_data, partition_data_iid_tff
-
-
+    from tff_data_utils import (
+        TFFDataManager,
+        generate_synthetic_data,
+        partition_data_iid_tff,
+    )
 
     dm = TFFDataManager(input_shape=(INPUT_DIM,))
 
@@ -952,21 +794,14 @@ if __name__ == "__main__":
 
     print(f"Input spec: {input_spec}")
 
-
-
     # ---- 3. Model factory -------------------------------------------- #
 
     factory = TFFModelFactory(
-
         keras_model=ref_model,
-
         input_spec=input_spec,
-
     )
 
     print("TFFModelFactory created.")
-
-
 
     # ---- 4. TFF-specific tests --------------------------------------- #
 
@@ -974,27 +809,18 @@ if __name__ == "__main__":
 
         print("\n--- TFF available — running full demo ---\n")
 
-
-
         model_fn = factory.create_model_fn()
 
         print(f"model_fn created: {model_fn}")
 
-
-
         # Build learning process
 
         process = build_tff_learning_process(
-
             model_fn=model_fn,
-
             config=TFFProcessConfig(client_lr=1e-3, server_lr=0.1),
-
         )
 
         print("Learning process built.")
-
-
 
         # Create round executor
 
@@ -1006,8 +832,6 @@ if __name__ == "__main__":
 
         print("Executor initialised with pre-trained weights.")
 
-
-
         # Synthesise federated data
 
         full_ds = generate_synthetic_data(240, (INPUT_DIM,), seed=10)
@@ -1017,12 +841,11 @@ if __name__ == "__main__":
         selected = ["client_001", "client_003", "client_005"]
 
         fed_data = dm.make_federated_data(
-
-            client_data, selected, batch_size=16, local_epochs=2,
-
+            client_data,
+            selected,
+            batch_size=16,
+            local_epochs=2,
         )
-
-
 
         # Run 3 TFF rounds
 
@@ -1032,47 +855,35 @@ if __name__ == "__main__":
 
             keras_w = executor.get_keras_weights()
 
-            print(f"  Round {rnd}: {len(keras_w)} weight arrays, "
-
-                  f"metrics keys: {list(metrics.keys())[:4]}")
-
-
+            print(
+                f"  Round {rnd}: {len(keras_w)} weight arrays, "
+                f"metrics keys: {list(metrics.keys())[:4]}"
+            )
 
             # Simulate enhancement: perturb weights slightly
 
-            enhanced = [w + np.random.randn(*w.shape).astype(np.float32) * 0.001
-
-                        for w in keras_w]
+            enhanced = [
+                w + np.random.randn(*w.shape).astype(np.float32) * 0.001
+                for w in keras_w
+            ]
 
             executor.set_keras_weights(enhanced)
 
-
-
         print("\nTFF demo complete.")
-
-
 
     else:
 
         print(
-
             "\n⚠  TFF not installed — running structural checks only.\n"
-
             "   Install: pip install tensorflow-federated==0.48.0\n"
-
             "   See requirements_tff.txt for the full stack.\n"
-
         )
-
-
 
         # Structural checks
 
         print("✓ TFFModelFactory instantiable (model_fn creation requires TFF)")
 
         print("✓ TFFProcessConfig:", TFFProcessConfig())
-
-
 
         try:
 
@@ -1082,8 +893,6 @@ if __name__ == "__main__":
 
             print(f"✓ model_fn correctly raises: {e.__class__.__name__}")
 
-
-
         # Weight conversion type check (without TFF, just show shapes)
 
         w = ref_model.get_weights()
@@ -1092,16 +901,11 @@ if __name__ == "__main__":
 
         ntr = [v.numpy() for v in ref_model.non_trainable_variables]
 
-        print(f"✓ Keras → TFF mapping: {len(tr)} trainable, "
-
-
-
-              f"{len(ntr)} non-trainable arrays")
-
-
+        print(
+            f"✓ Keras → TFF mapping: {len(tr)} trainable, "
+            f"{len(ntr)} non-trainable arrays"
+        )
 
     print("\nDone.")
-
-
 
     print("\nStructural checks passed.")

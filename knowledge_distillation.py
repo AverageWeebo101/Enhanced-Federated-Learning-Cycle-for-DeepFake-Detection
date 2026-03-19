@@ -24,10 +24,7 @@ RAM-optimisation changes (vs. original):
 
 """
 
-
-
 from __future__ import annotations
-
 
 
 import gc
@@ -39,18 +36,13 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
 
-
 import numpy as np
 
 import tensorflow as tf
 
-
-
 # ---------- shared types from Parts 1 & 2 ----------------------------- #
 
 from enhanced_client_selection import FederatedClient, ReputationLedger
-
-
 
 # ---------------------------------------------------------------------------
 
@@ -59,17 +51,11 @@ from enhanced_client_selection import FederatedClient, ReputationLedger
 # ---------------------------------------------------------------------------
 
 logging.basicConfig(
-
     level=logging.INFO,
-
     format="%(asctime)s | %(levelname)-8s | %(message)s",
-
 )
 
 logger = logging.getLogger(__name__)
-
-
-
 
 
 # ====================================================================== #
@@ -79,11 +65,8 @@ logger = logging.getLogger(__name__)
 # ====================================================================== #
 
 
-
 @dataclass
-
 class DistillationConfig:
-
     """
 
     Hyper-parameters for server-side knowledge distillation.
@@ -133,9 +116,6 @@ class DistillationConfig:
     learning_rate: float = 1e-4
 
 
-
-
-
 # ====================================================================== #
 
 #  2.  TEACHER LOGIT BUILDER  (RAM-optimised: single cached model)        #
@@ -143,9 +123,7 @@ class DistillationConfig:
 # ====================================================================== #
 
 
-
 class TeacherEnsemble:
-
     """
 
     Builds a *virtual* teacher by computing the contribution-weighted
@@ -160,18 +138,11 @@ class TeacherEnsemble:
 
     """
 
-
-
     def __init__(
-
         self,
-
         global_model: tf.keras.Model,
-
         client_weights: Dict[str, List[np.ndarray]],
-
         contribution_weights: Dict[str, float],
-
     ) -> None:
 
         self.global_model = global_model
@@ -179,19 +150,13 @@ class TeacherEnsemble:
         # Filter to clients that actually contribute
 
         self.client_weights = {
-
-            cid: w for cid, w in client_weights.items()
-
+            cid: w
+            for cid, w in client_weights.items()
             if contribution_weights.get(cid, 0.0) > 0
-
         }
 
         self.contribution_weights = {
-
-            cid: contribution_weights[cid]
-
-            for cid in self.client_weights
-
+            cid: contribution_weights[cid] for cid in self.client_weights
         }
 
         total_c = sum(self.contribution_weights.values())
@@ -199,9 +164,7 @@ class TeacherEnsemble:
         # Normalise so weights sum to 1
 
         self._norm_weights = {
-
             cid: c / total_c for cid, c in self.contribution_weights.items()
-
         }
 
         # Build ONE cached logit model (instead of N clones)
@@ -209,14 +172,9 @@ class TeacherEnsemble:
         self._logit_model = self._rebuild_with_linear_output(self.global_model)
 
         logger.debug(
-
             "TeacherEnsemble: %d client(s), single cached logit model",
-
             len(self.client_weights),
-
         )
-
-
 
     # ------------------------------------------------------------------ #
 
@@ -224,16 +182,10 @@ class TeacherEnsemble:
 
     # ------------------------------------------------------------------ #
 
-
-
     @staticmethod
-
     def _rebuild_with_linear_output(
-
         ref_model: tf.keras.Model,
-
     ) -> tf.keras.Model:
-
         """
 
         Rebuild *ref_model* identically, except the last ``Dense`` layer
@@ -248,8 +200,6 @@ class TeacherEnsemble:
 
         cloned.set_weights(ref_model.get_weights())
 
-
-
         # Override the last Dense layer's activation to linear
 
         for layer in reversed(cloned.layers):
@@ -260,27 +210,17 @@ class TeacherEnsemble:
 
                 break
 
-
-
         return cloned
 
-
-
     def _build_logit_model(
-
         self,
-
         weights: List[np.ndarray],
-
     ) -> tf.keras.Model:
-
         """Set weights on the cached logit model and return it."""
 
         self._logit_model.set_weights(weights)
 
         return self._logit_model
-
-
 
     # ------------------------------------------------------------------ #
 
@@ -288,18 +228,11 @@ class TeacherEnsemble:
 
     # ------------------------------------------------------------------ #
 
-
-
     def compute_teacher_logits_batch(
-
         self,
-
         x_batch: tf.Tensor,
-
         temperature: float = 1.0,
-
     ) -> tf.Tensor:
-
         """
 
         Return the contribution-weighted average teacher logits for
@@ -344,26 +277,17 @@ class TeacherEnsemble:
 
         return weighted_logits
 
-
-
     # ------------------------------------------------------------------ #
 
     #  Pre-compute teacher logits (kept for API compat, but now streamed) #
 
     # ------------------------------------------------------------------ #
 
-
-
     def precompute_teacher_logits(
-
         self,
-
         proxy_data: tf.data.Dataset,
-
         batch_size: int = 32,
-
     ) -> Tuple[np.ndarray, np.ndarray]:
-
         """
 
         Pre-compute teacher logits for every sample in *proxy_data*.
@@ -375,8 +299,6 @@ class TeacherEnsemble:
         all_inputs: List[np.ndarray] = []
 
         all_logits: List[np.ndarray] = []
-
-
 
         batched = proxy_data.batch(batch_size).prefetch(1)
 
@@ -390,20 +312,13 @@ class TeacherEnsemble:
 
                 x_batch = batch
 
-
-
             teacher_logits = self.compute_teacher_logits_batch(x_batch)
 
             all_inputs.append(x_batch.numpy())
 
             all_logits.append(teacher_logits.numpy())
 
-
-
         return np.concatenate(all_inputs), np.concatenate(all_logits)
-
-
-
 
 
 # ====================================================================== #
@@ -413,17 +328,11 @@ class TeacherEnsemble:
 # ====================================================================== #
 
 
-
 def distillation_loss(
-
     teacher_logits: tf.Tensor,
-
     student_logits: tf.Tensor,
-
     temperature: float,
-
 ) -> tf.Tensor:
-
     """
 
     Compute the knowledge-distillation loss:
@@ -444,11 +353,7 @@ def distillation_loss(
 
     student_logits = tf.cast(student_logits, tf.float32)
 
-
-
     num_outputs = teacher_logits.shape[-1]
-
-
 
     if num_outputs == 1:
 
@@ -456,23 +361,19 @@ def distillation_loss(
 
         p_teach = teacher_logits
 
-        p_stud  = tf.sigmoid(student_logits / temperature)
+        p_stud = tf.sigmoid(student_logits / temperature)
 
         eps = 1e-7
 
         p_teach = tf.clip_by_value(p_teach, eps, 1.0 - eps)
 
-        p_stud  = tf.clip_by_value(p_stud,  eps, 1.0 - eps)
+        p_stud = tf.clip_by_value(p_stud, eps, 1.0 - eps)
 
-        kl = (
-
-            p_teach * tf.math.log(p_teach / p_stud)
-
-            + (1.0 - p_teach) * tf.math.log((1.0 - p_teach) / (1.0 - p_stud))
-
+        kl = p_teach * tf.math.log(p_teach / p_stud) + (1.0 - p_teach) * tf.math.log(
+            (1.0 - p_teach) / (1.0 - p_stud)
         )
 
-        return temperature ** 2 * tf.reduce_mean(kl)
+        return temperature**2 * tf.reduce_mean(kl)
 
     else:
 
@@ -483,27 +384,17 @@ def distillation_loss(
         log_p_stud = tf.nn.log_softmax(student_logits / temperature)
 
         kl = tf.reduce_sum(
-
             p_teach * (tf.math.log(p_teach + 1e-12) - log_p_stud),
-
             axis=-1,
-
         )
 
-        return temperature ** 2 * tf.reduce_mean(kl)
-
-
-
+        return temperature**2 * tf.reduce_mean(kl)
 
 
 def supervised_loss(
-
     student_logits: tf.Tensor,
-
     labels: tf.Tensor,
-
 ) -> tf.Tensor:
-
     """
 
     Standard supervised cross-entropy loss.
@@ -513,8 +404,6 @@ def supervised_loss(
     # Ensure consistent dtype (mixed-precision may produce float16 logits)
 
     student_logits = tf.cast(student_logits, tf.float32)
-
-
 
     num_outputs = student_logits.shape[-1]
 
@@ -527,29 +416,22 @@ def supervised_loss(
             labels = tf.expand_dims(labels, -1)
 
         return tf.reduce_mean(
-
             tf.keras.losses.binary_crossentropy(
-
-                labels, student_logits, from_logits=True,
-
+                labels,
+                student_logits,
+                from_logits=True,
             )
-
         )
 
     else:
 
         return tf.reduce_mean(
-
             tf.keras.losses.sparse_categorical_crossentropy(
-
-                labels, student_logits, from_logits=True,
-
+                labels,
+                student_logits,
+                from_logits=True,
             )
-
         )
-
-
-
 
 
 # ====================================================================== #
@@ -559,9 +441,7 @@ def supervised_loss(
 # ====================================================================== #
 
 
-
 class KnowledgeDistiller:
-
     """
 
     Performs server-side knowledge distillation from a weighted ensemble
@@ -576,18 +456,11 @@ class KnowledgeDistiller:
 
     """
 
-
-
     def __init__(
-
         self,
-
         global_model: tf.keras.Model,
-
         teacher: TeacherEnsemble,
-
         config: Optional[DistillationConfig] = None,
-
     ) -> None:
 
         self.global_model = global_model
@@ -598,18 +471,13 @@ class KnowledgeDistiller:
 
         self.optimizer = tf.keras.optimizers.Adam(self.config.learning_rate)
 
-
-
     # ------------------------------------------------------------------ #
 
     #  Build a "logit model" view of the global student                   #
 
     # ------------------------------------------------------------------ #
 
-
-
     def _build_student_logit_model(self) -> tf.keras.Model:
-
         """
 
         Return an independent version of the global model that outputs
@@ -626,32 +494,20 @@ class KnowledgeDistiller:
 
         return student
 
-
-
     # ------------------------------------------------------------------ #
 
     #  Single training step                                               #
 
     # ------------------------------------------------------------------ #
 
-
-
     @tf.function
-
     def _train_step_kd_only(
-
         self,
-
         x_batch: tf.Tensor,
-
         teacher_logits: tf.Tensor,
-
         student_model: tf.keras.Model,
-
         temperature: float,
-
     ) -> tf.Tensor:
-
         """Pure distillation step (no supervised term)."""
 
         with tf.GradientTape() as tape:
@@ -662,38 +518,21 @@ class KnowledgeDistiller:
 
         grads = tape.gradient(loss, student_model.trainable_variables)
 
-        self.optimizer.apply_gradients(
-
-            zip(grads, student_model.trainable_variables)
-
-        )
+        self.optimizer.apply_gradients(zip(grads, student_model.trainable_variables))
 
         return loss
 
-
-
     @tf.function
-
     def _train_step_combined(
-
         self,
-
         x_proxy: tf.Tensor,
-
         teacher_logits: tf.Tensor,
-
         x_sup: tf.Tensor,
-
         y_sup: tf.Tensor,
-
         student_model: tf.keras.Model,
-
         temperature: float,
-
         lam: float,
-
     ) -> Tuple[tf.Tensor, tf.Tensor, tf.Tensor]:
-
         """Combined distillation + supervised step."""
 
         with tf.GradientTape() as tape:
@@ -702,25 +541,15 @@ class KnowledgeDistiller:
 
             l_kd = distillation_loss(teacher_logits, stud_logits_proxy, temperature)
 
-
-
             stud_logits_sup = student_model(x_sup, training=True)
 
             l_sup = supervised_loss(stud_logits_sup, y_sup)
 
-
-
             l_total = lam * l_kd + (1.0 - lam) * l_sup
-
-
 
         grads = tape.gradient(l_total, student_model.trainable_variables)
 
-        self.optimizer.apply_gradients(
-
-            zip(grads, student_model.trainable_variables)
-
-        )
+        self.optimizer.apply_gradients(zip(grads, student_model.trainable_variables))
 
         return l_total, l_kd, l_sup
 
@@ -732,18 +561,11 @@ class KnowledgeDistiller:
 
     # ------------------------------------------------------------------ #
 
-
-
     def distill(
-
         self,
-
         proxy_data: tf.data.Dataset,
-
         supervised_data: Optional[tf.data.Dataset] = None,
-
     ) -> Dict[str, List[float]]:
-
         """
 
         Run the full distillation loop.
@@ -762,44 +584,26 @@ class KnowledgeDistiller:
 
         lam = cfg.lam
 
-
-
         history: Dict[str, List[float]] = {
-
             "epoch": [],
-
             "loss_total": [],
-
             "loss_kd": [],
-
             "loss_sup": [],
-
         }
-
-
 
         # Build proxy dataset (batched)
 
         proxy_ds = proxy_data.batch(cfg.batch_size).prefetch(1)
-
-
 
         # Prepare supervised data iterator (if available)
 
         if supervised_data is not None:
 
             sup_ds = (
-
-                supervised_data
-
-                .shuffle(buffer_size=1000)
-
+                supervised_data.shuffle(buffer_size=1000)
                 .batch(cfg.batch_size)
-
                 .repeat()
-
                 .prefetch(1)
-
             )
 
             sup_iter = iter(sup_ds)
@@ -808,13 +612,9 @@ class KnowledgeDistiller:
 
             sup_iter = None
 
-
-
         # Build student logit model (reuse teacher's cached clone)
 
         student = self._build_student_logit_model()
-
-
 
         # --- Distillation epochs -------------------------------------- #
 
@@ -826,8 +626,6 @@ class KnowledgeDistiller:
 
             epoch_loss_sup = []
 
-
-
             for batch in proxy_ds:
 
                 if isinstance(batch, (list, tuple)):
@@ -838,17 +636,12 @@ class KnowledgeDistiller:
 
                     x_proxy_batch = batch
 
-
-
                 # Compute teacher logits on-the-fly (no precompute)
 
                 teach_logits_batch = self.teacher.compute_teacher_logits_batch(
-
-                    x_proxy_batch, temperature=T,
-
+                    x_proxy_batch,
+                    temperature=T,
                 )
-
-
 
                 if sup_iter is not None:
 
@@ -862,16 +655,14 @@ class KnowledgeDistiller:
 
                         x_sup_batch, y_sup_batch = next(sup_iter)
 
-
-
                     l_total, l_kd, l_sup = self._train_step_combined(
-
-                        x_proxy_batch, teach_logits_batch,
-
-                        x_sup_batch, y_sup_batch,
-
-                        student, T, lam,
-
+                        x_proxy_batch,
+                        teach_logits_batch,
+                        x_sup_batch,
+                        y_sup_batch,
+                        student,
+                        T,
+                        lam,
                     )
 
                     epoch_loss_total.append(float(l_total))
@@ -883,11 +674,10 @@ class KnowledgeDistiller:
                 else:
 
                     l_kd = self._train_step_kd_only(
-
-                        x_proxy_batch, teach_logits_batch,
-
-                        student, T,
-
+                        x_proxy_batch,
+                        teach_logits_batch,
+                        student,
+                        T,
                     )
 
                     epoch_loss_total.append(float(l_kd))
@@ -900,11 +690,9 @@ class KnowledgeDistiller:
 
             mean_total = float(np.mean(epoch_loss_total))
 
-            mean_kd    = float(np.mean(epoch_loss_kd))
+            mean_kd = float(np.mean(epoch_loss_kd))
 
-            mean_sup   = float(np.mean(epoch_loss_sup))
-
-
+            mean_sup = float(np.mean(epoch_loss_sup))
 
             history["epoch"].append(epoch)
 
@@ -914,17 +702,14 @@ class KnowledgeDistiller:
 
             history["loss_sup"].append(mean_sup)
 
-
-
             logger.debug(
-
                 "Distillation epoch %d/%d — L_total=%.5f  L_KD=%.5f  L_sup=%.5f",
-
-                epoch, cfg.epochs, mean_total, mean_kd, mean_sup,
-
+                epoch,
+                cfg.epochs,
+                mean_total,
+                mean_kd,
+                mean_sup,
             )
-
-
 
         # --- Copy distilled weights back to global model -------------- #
 
@@ -938,10 +723,7 @@ class KnowledgeDistiller:
 
         gc.collect()
 
-
-
         return history
-
 
 
 # ====================================================================== #
@@ -953,23 +735,14 @@ class KnowledgeDistiller:
 # ====================================================================== #
 
 
-
 def run_distillation_round(
-
     global_model: tf.keras.Model,
-
     client_weights: Dict[str, List[np.ndarray]],
-
     contribution_weights: Dict[str, float],
-
     proxy_data: tf.data.Dataset,
-
     supervised_data: Optional[tf.data.Dataset] = None,
-
     config: Optional[DistillationConfig] = None,
-
 ) -> Dict[str, List[float]]:
-
     """
 
     One-liner helper that creates the teacher ensemble, distiller,
@@ -980,31 +753,19 @@ def run_distillation_round(
 
     config = config or DistillationConfig()
 
-
-
     teacher = TeacherEnsemble(
-
         global_model=global_model,
-
         client_weights=client_weights,
-
         contribution_weights=contribution_weights,
-
     )
 
     distiller = KnowledgeDistiller(
-
         global_model=global_model,
-
         teacher=teacher,
-
         config=config,
-
     )
 
     result = distiller.distill(proxy_data, supervised_data)
-
-
 
     # Free teacher ensemble
 
@@ -1012,7 +773,4 @@ def run_distillation_round(
 
     gc.collect()
 
-
-
     return result
-
