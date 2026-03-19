@@ -1938,6 +1938,24 @@ if __name__ == "__main__":
 
     proxy_ds = _generate_proxy_data(80, input_shape, seed=40)
 
+
+            if self.global_model is None:
+                self.load_global_model()
+
+            if len(self.clients) == 0:
+                raise ValueError(
+                    "No clients are initialized. Call create_clients(client_data) before run()."
+                )
+
+            if (
+                self.selector is None
+                or self.validator is None
+                or self.evaluator is None
+                or self.reputation_ledger is None
+                or self.basic_ledger is None
+            ):
+                self.setup_components()
+
     sup_ds = _generate_synthetic_data(60, input_shape, seed=50)
 
     client_data = partition_data_iid(train_ds, N_CLIENT, seed=42)
