@@ -964,6 +964,22 @@ class FederatedLearningCycle:
 
         logger.info("All FL-cycle components initialised.")
 
+    def _prepare_local_trainer(self) -> tf.keras.Model:
+        """Build/rebuild the reusable local trainer once per round."""
+        cfg = self.config
+        if self._local_train_model is None:
+            self._local_train_model = tf.keras.models.clone_model(self.global_model)
+            self._local_train_model.build(self.global_model.input_shape)
+
+        # Recompile once per round to reset optimizer state while avoiding
+        # per-client graph/optimizer allocations.
+        self._local_train_model.compile(
+            optimizer=tf.keras.optimizers.Adam(cfg.local_lr),
+            loss="binary_crossentropy",
+            metrics=["accuracy"],
+        )
+        return self._local_train_model
+
     # ------------------------------------------------------------------ #
 
     #  Local training                                                     #
@@ -1012,16 +1028,9 @@ class FederatedLearningCycle:
         cfg = self.config
 
         if self._local_train_model is None:
-            self._local_train_model = tf.keras.models.clone_model(self.global_model)
-            self._local_train_model.build(self.global_model.input_shape)
-        local_model = self._local_train_model
-
-        # Compile per client so optimizer state does not leak across clients.
-        local_model.compile(
-            optimizer=tf.keras.optimizers.Adam(cfg.local_lr),
-            loss="binary_crossentropy",
-            metrics=["accuracy"],
-        )
+            local_model = self._prepare_local_trainer()
+        else:
+            local_model = self._local_train_model
 
         local_model.set_weights(global_weights)
 
@@ -1216,6 +1225,9 @@ class FederatedLearningCycle:
         )
 
         global_weights = self.global_model.get_weights()
+
+        # Prepare reusable local trainer once per round.
+        self._prepare_local_trainer()
 
         # ── 2. Local training ──────────────────────────────────────── #
 

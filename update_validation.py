@@ -659,9 +659,11 @@ class UpdateValidator:
 
             hist_dir = self.update_history.mean_direction
 
+            sim_source = clipped_flat if is_suspicious else delta_flat
+
             if hist_dir is not None:
 
-                sim_i = cosine_similarity(flatten_weights(delta), hist_dir)
+                sim_i = cosine_similarity(sim_source, hist_dir)
 
             else:
 
