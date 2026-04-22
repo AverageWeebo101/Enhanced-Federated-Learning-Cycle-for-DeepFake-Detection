@@ -1,0 +1,6 @@
+{
+  "round": 0,
+  "weights_file": "round_000.weights.h5",
+  "history_file": "history.json",
+  "ledger_file": "reputation_ledger.json"
+}

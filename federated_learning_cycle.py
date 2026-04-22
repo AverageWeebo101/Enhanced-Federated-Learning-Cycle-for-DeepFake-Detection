@@ -970,14 +970,16 @@ class FederatedLearningCycle:
         if self._local_train_model is None:
             self._local_train_model = tf.keras.models.clone_model(self.global_model)
             self._local_train_model.build(self.global_model.input_shape)
+            self._local_train_model.compile(
+                optimizer=tf.keras.optimizers.Adam(cfg.local_lr),
+                loss="binary_crossentropy",
+                metrics=["accuracy"],
+            )
+        else:
+            if hasattr(self._local_train_model.optimizer, "variables"):
+                for var in self._local_train_model.optimizer.variables():
+                    var.assign(tf.zeros_like(var))
 
-        # Recompile once per round to reset optimizer state while avoiding
-        # per-client graph/optimizer allocations.
-        self._local_train_model.compile(
-            optimizer=tf.keras.optimizers.Adam(cfg.local_lr),
-            loss="binary_crossentropy",
-            metrics=["accuracy"],
-        )
         return self._local_train_model
 
     # ------------------------------------------------------------------ #
