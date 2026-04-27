@@ -977,7 +977,10 @@ class FederatedLearningCycle:
             )
         else:
             if hasattr(self._local_train_model.optimizer, "variables"):
-                for var in self._local_train_model.optimizer.variables():
+                opt_vars = self._local_train_model.optimizer.variables
+                if callable(opt_vars):
+                    opt_vars = opt_vars()
+                for var in opt_vars:
                     var.assign(tf.zeros_like(var))
 
         return self._local_train_model
