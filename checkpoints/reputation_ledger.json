@@ -1,0 +1,1753 @@
+{
+  "config": {
+    "theta": 0.0,
+    "gamma": 0.1,
+    "decay_rate": 0.99,
+    "floor": 0.05,
+    "ceiling": 1.0,
+    "initial_reputation": 0.5,
+    "penalty_factor": 0.05
+  },
+  "entries": {
+    "client_0": {
+      "client_id": "client_0",
+      "reputation": 0.47290665589430897,
+      "total_rounds_participated": 2,
+      "total_valid_updates": 1,
+      "total_invalid_updates": 1,
+      "cumulative_gain": 0.125,
+      "last_participated_round": 3,
+      "history": [
+        {
+          "round": 1,
+          "G_i": 0.125,
+          "is_valid": true,
+          "delta": 0.125,
+          "R_old": 0.5,
+          "R_new": 0.5125,
+          "c_i": 0.25,
+          "ts": 1777289573.737
+        },
+        {
+          "round": 2,
+          "event": "decay",
+          "R_old": 0.5125,
+          "R_new": 0.507375,
+          "ts": 1777290212.2271843
+        },
+        {
+          "round": 3,
+          "G_i": 0.0,
+          "is_valid": false,
+          "delta": 0.0,
+          "R_old": 0.507375,
+          "R_new": 0.507375,
+          "c_i": 0.258488,
+          "ts": 1777290596.1759717
+        },
+        {
+          "round": 4,
+          "event": "decay",
+          "R_old": 0.507375,
+          "R_new": 0.502301,
+          "ts": 1777291208.2259188
+        },
+        {
+          "round": 5,
+          "event": "decay",
+          "R_old": 0.502301,
+          "R_new": 0.497278,
+          "ts": 1777291820.9276536
+        },
+        {
+          "round": 6,
+          "event": "decay",
+          "R_old": 0.497278,
+          "R_new": 0.492305,
+          "ts": 1777292436.5085013
+        },
+        {
+          "round": 7,
+          "event": "decay",
+          "R_old": 0.492305,
+          "R_new": 0.487382,
+          "ts": 1777293052.6146224
+        },
+        {
+          "round": 8,
+          "event": "decay",
+          "R_old": 0.487382,
+          "R_new": 0.482509,
+          "ts": 1777293690.4594038
+        },
+        {
+          "round": 9,
+          "event": "decay",
+          "R_old": 0.482509,
+          "R_new": 0.477683,
+          "ts": 1777297706.4950054
+        },
+        {
+          "round": 10,
+          "event": "decay",
+          "R_old": 0.477683,
+          "R_new": 0.472907,
+          "ts": 1777298323.1587958
+        }
+      ]
+    },
+    "client_1": {
+      "client_id": "client_1",
+      "reputation": 0.4555469387895414,
+      "total_rounds_participated": 2,
+      "total_valid_updates": 0,
+      "total_invalid_updates": 2,
+      "cumulative_gain": -0.125,
+      "last_participated_round": 3,
+      "history": [
+        {
+          "round": 1,
+          "event": "decay",
+          "R_old": 0.5,
+          "R_new": 0.495,
+          "ts": 1777289573.737035
+        },
+        {
+          "round": 2,
+          "G_i": 0.0,
+          "is_valid": false,
+          "delta": 0.0,
+          "R_old": 0.495,
+          "R_new": 0.495,
+          "c_i": 0.249337,
+          "ts": 1777290212.2271454
+        },
+        {
+          "round": 3,
+          "G_i": -0.125,
+          "is_valid": false,
+          "delta": 0.0,
+          "R_old": 0.495,
+          "R_new": 0.48875,
+          "c_i": 0.0,
+          "ts": 1777290596.1759975
+        },
+        {
+          "round": 4,
+          "event": "decay",
+          "R_old": 0.48875,
+          "R_new": 0.483863,
+          "ts": 1777291208.2259223
+        },
+        {
+          "round": 5,
+          "event": "decay",
+          "R_old": 0.483863,
+          "R_new": 0.479024,
+          "ts": 1777291820.9276574
+        },
+        {
+          "round": 6,
+          "event": "decay",
+          "R_old": 0.479024,
+          "R_new": 0.474234,
+          "ts": 1777292436.5085053
+        },
+        {
+          "round": 7,
+          "event": "decay",
+          "R_old": 0.474234,
+          "R_new": 0.469491,
+          "ts": 1777293052.6146266
+        },
+        {
+          "round": 8,
+          "event": "decay",
+          "R_old": 0.469491,
+          "R_new": 0.464796,
+          "ts": 1777293690.4594076
+        },
+        {
+          "round": 9,
+          "event": "decay",
+          "R_old": 0.464796,
+          "R_new": 0.460148,
+          "ts": 1777297706.495011
+        },
+        {
+          "round": 10,
+          "event": "decay",
+          "R_old": 0.460148,
+          "R_new": 0.455547,
+          "ts": 1777298323.1587996
+        }
+      ]
+    },
+    "client_2": {
+      "client_id": "client_2",
+      "reputation": 0.46137234721396,
+      "total_rounds_participated": 2,
+      "total_valid_updates": 0,
+      "total_invalid_updates": 2,
+      "cumulative_gain": 0.0,
+      "last_participated_round": 10,
+      "history": [
+        {
+          "round": 1,
+          "event": "decay",
+          "R_old": 0.5,
+          "R_new": 0.495,
+          "ts": 1777289573.737043
+        },
+        {
+          "round": 2,
+          "event": "decay",
+          "R_old": 0.495,
+          "R_new": 0.49005,
+          "ts": 1777290212.2271886
+        },
+        {
+          "round": 3,
+          "event": "decay",
+          "R_old": 0.49005,
+          "R_new": 0.485149,
+          "ts": 1777290596.176006
+        },
+        {
+          "round": 4,
+          "event": "decay",
+          "R_old": 0.485149,
+          "R_new": 0.480298,
+          "ts": 1777291208.2259257
+        },
+        {
+          "round": 5,
+          "event": "decay",
+          "R_old": 0.480298,
+          "R_new": 0.475495,
+          "ts": 1777291820.9276605
+        },
+        {
+          "round": 6,
+          "event": "decay",
+          "R_old": 0.475495,
+          "R_new": 0.47074,
+          "ts": 1777292436.5085087
+        },
+        {
+          "round": 7,
+          "event": "decay",
+          "R_old": 0.47074,
+          "R_new": 0.466033,
+          "ts": 1777293052.61463
+        },
+        {
+          "round": 8,
+          "event": "decay",
+          "R_old": 0.466033,
+          "R_new": 0.461372,
+          "ts": 1777293690.4594111
+        },
+        {
+          "round": 9,
+          "G_i": 0.0,
+          "is_valid": false,
+          "delta": 0.0,
+          "R_old": 0.461372,
+          "R_new": 0.461372,
+          "c_i": 0.249223,
+          "ts": 1777297706.4949706
+        },
+        {
+          "round": 10,
+          "G_i": 0.0,
+          "is_valid": false,
+          "delta": 0.0,
+          "R_old": 0.461372,
+          "R_new": 0.461372,
+          "c_i": 0.242955,
+          "ts": 1777298323.1587753
+        }
+      ]
+    },
+    "client_3": {
+      "client_id": "client_3",
+      "reputation": 0.45219103750440215,
+      "total_rounds_participated": 0,
+      "total_valid_updates": 0,
+      "total_invalid_updates": 0,
+      "cumulative_gain": 0.0,
+      "last_participated_round": 0,
+      "history": [
+        {
+          "round": 1,
+          "event": "decay",
+          "R_old": 0.5,
+          "R_new": 0.495,
+          "ts": 1777289573.7370486
+        },
+        {
+          "round": 2,
+          "event": "decay",
+          "R_old": 0.495,
+          "R_new": 0.49005,
+          "ts": 1777290212.227191
+        },
+        {
+          "round": 3,
+          "event": "decay",
+          "R_old": 0.49005,
+          "R_new": 0.485149,
+          "ts": 1777290596.1760101
+        },
+        {
+          "round": 4,
+          "event": "decay",
+          "R_old": 0.485149,
+          "R_new": 0.480298,
+          "ts": 1777291208.2259285
+        },
+        {
+          "round": 5,
+          "event": "decay",
+          "R_old": 0.480298,
+          "R_new": 0.475495,
+          "ts": 1777291820.9276636
+        },
+        {
+          "round": 6,
+          "event": "decay",
+          "R_old": 0.475495,
+          "R_new": 0.47074,
+          "ts": 1777292436.508512
+        },
+        {
+          "round": 7,
+          "event": "decay",
+          "R_old": 0.47074,
+          "R_new": 0.466033,
+          "ts": 1777293052.6146326
+        },
+        {
+          "round": 8,
+          "event": "decay",
+          "R_old": 0.466033,
+          "R_new": 0.461372,
+          "ts": 1777293690.4594142
+        },
+        {
+          "round": 9,
+          "event": "decay",
+          "R_old": 0.461372,
+          "R_new": 0.456759,
+          "ts": 1777297706.4950147
+        },
+        {
+          "round": 10,
+          "event": "decay",
+          "R_old": 0.456759,
+          "R_new": 0.452191,
+          "ts": 1777298323.1588025
+        }
+      ]
+    },
+    "client_4": {
+      "client_id": "client_4",
+      "reputation": 0.45675862374182036,
+      "total_rounds_participated": 1,
+      "total_valid_updates": 0,
+      "total_invalid_updates": 1,
+      "cumulative_gain": 0.0,
+      "last_participated_round": 7,
+      "history": [
+        {
+          "round": 1,
+          "event": "decay",
+          "R_old": 0.5,
+          "R_new": 0.495,
+          "ts": 1777289573.7370548
+        },
+        {
+          "round": 2,
+          "event": "decay",
+          "R_old": 0.495,
+          "R_new": 0.49005,
+          "ts": 1777290212.2271943
+        },
+        {
+          "round": 3,
+          "event": "decay",
+          "R_old": 0.49005,
+          "R_new": 0.485149,
+          "ts": 1777290596.1760137
+        },
+        {
+          "round": 4,
+          "event": "decay",
+          "R_old": 0.485149,
+          "R_new": 0.480298,
+          "ts": 1777291208.2259312
+        },
+        {
+          "round": 5,
+          "event": "decay",
+          "R_old": 0.480298,
+          "R_new": 0.475495,
+          "ts": 1777291820.9276667
+        },
+        {
+          "round": 6,
+          "event": "decay",
+          "R_old": 0.475495,
+          "R_new": 0.47074,
+          "ts": 1777292436.5085156
+        },
+        {
+          "round": 7,
+          "G_i": 0.0,
+          "is_valid": false,
+          "delta": 0.0,
+          "R_old": 0.47074,
+          "R_new": 0.47074,
+          "c_i": 0.24971,
+          "ts": 1777293052.6146033
+        },
+        {
+          "round": 8,
+          "event": "decay",
+          "R_old": 0.47074,
+          "R_new": 0.466033,
+          "ts": 1777293690.4594178
+        },
+        {
+          "round": 9,
+          "event": "decay",
+          "R_old": 0.466033,
+          "R_new": 0.461372,
+          "ts": 1777297706.4950182
+        },
+        {
+          "round": 10,
+          "event": "decay",
+          "R_old": 0.461372,
+          "R_new": 0.456759,
+          "ts": 1777298323.1588058
+        }
+      ]
+    },
+    "client_5": {
+      "client_id": "client_5",
+      "reputation": 0.45219103750440215,
+      "total_rounds_participated": 0,
+      "total_valid_updates": 0,
+      "total_invalid_updates": 0,
+      "cumulative_gain": 0.0,
+      "last_participated_round": 0,
+      "history": [
+        {
+          "round": 1,
+          "event": "decay",
+          "R_old": 0.5,
+          "R_new": 0.495,
+          "ts": 1777289573.7370605
+        },
+        {
+          "round": 2,
+          "event": "decay",
+          "R_old": 0.495,
+          "R_new": 0.49005,
+          "ts": 1777290212.2271974
+        },
+        {
+          "round": 3,
+          "event": "decay",
+          "R_old": 0.49005,
+          "R_new": 0.485149,
+          "ts": 1777290596.1760163
+        },
+        {
+          "round": 4,
+          "event": "decay",
+          "R_old": 0.485149,
+          "R_new": 0.480298,
+          "ts": 1777291208.2259345
+        },
+        {
+          "round": 5,
+          "event": "decay",
+          "R_old": 0.480298,
+          "R_new": 0.475495,
+          "ts": 1777291820.9276702
+        },
+        {
+          "round": 6,
+          "event": "decay",
+          "R_old": 0.475495,
+          "R_new": 0.47074,
+          "ts": 1777292436.5085185
+        },
+        {
+          "round": 7,
+          "event": "decay",
+          "R_old": 0.47074,
+          "R_new": 0.466033,
+          "ts": 1777293052.614636
+        },
+        {
+          "round": 8,
+          "event": "decay",
+          "R_old": 0.466033,
+          "R_new": 0.461372,
+          "ts": 1777293690.459421
+        },
+        {
+          "round": 9,
+          "event": "decay",
+          "R_old": 0.461372,
+          "R_new": 0.456759,
+          "ts": 1777297706.4950213
+        },
+        {
+          "round": 10,
+          "event": "decay",
+          "R_old": 0.456759,
+          "R_new": 0.452191,
+          "ts": 1777298323.1588085
+        }
+      ]
+    },
+    "client_6": {
+      "client_id": "client_6",
+      "reputation": 0.46949129988750005,
+      "total_rounds_participated": 5,
+      "total_valid_updates": 0,
+      "total_invalid_updates": 5,
+      "cumulative_gain": -0.125,
+      "last_participated_round": 8,
+      "history": [
+        {
+          "round": 1,
+          "event": "decay",
+          "R_old": 0.5,
+          "R_new": 0.495,
+          "ts": 1777289573.7370658
+        },
+        {
+          "round": 2,
+          "G_i": 0.0,
+          "is_valid": false,
+          "delta": 0.0,
+          "R_old": 0.495,
+          "R_new": 0.495,
+          "c_i": 0.250747,
+          "ts": 1777290212.227115
+        },
+        {
+          "round": 3,
+          "G_i": -0.125,
+          "is_valid": false,
+          "delta": 0.0,
+          "R_old": 0.495,
+          "R_new": 0.48875,
+          "c_i": 0.0,
+          "ts": 1777290596.175954
+        },
+        {
+          "round": 4,
+          "event": "decay",
+          "R_old": 0.48875,
+          "R_new": 0.483863,
+          "ts": 1777291208.2259376
+        },
+        {
+          "round": 5,
+          "G_i": 0.0,
+          "is_valid": false,
+          "delta": 0.0,
+          "R_old": 0.483863,
+          "R_new": 0.483863,
+          "c_i": 0.247286,
+          "ts": 1777291820.927635
+        },
+        {
+          "round": 6,
+          "G_i": 0.0,
+          "is_valid": false,
+          "delta": 0.0,
+          "R_old": 0.483863,
+          "R_new": 0.483863,
+          "c_i": 0.252879,
+          "ts": 1777292436.508464
+        },
+        {
+          "round": 7,
+          "event": "decay",
+          "R_old": 0.483863,
+          "R_new": 0.479024,
+          "ts": 1777293052.6146405
+        },
+        {
+          "round": 8,
+          "G_i": 0.0,
+          "is_valid": false,
+          "delta": 0.0,
+          "R_old": 0.479024,
+          "R_new": 0.479024,
+          "c_i": 0.248948,
+          "ts": 1777293690.4593852
+        },
+        {
+          "round": 9,
+          "event": "decay",
+          "R_old": 0.479024,
+          "R_new": 0.474234,
+          "ts": 1777297706.4950247
+        },
+        {
+          "round": 10,
+          "event": "decay",
+          "R_old": 0.474234,
+          "R_new": 0.469491,
+          "ts": 1777298323.158811
+        }
+      ]
+    },
+    "client_7": {
+      "client_id": "client_7",
+      "reputation": 0.45219103750440215,
+      "total_rounds_participated": 0,
+      "total_valid_updates": 0,
+      "total_invalid_updates": 0,
+      "cumulative_gain": 0.0,
+      "last_participated_round": 0,
+      "history": [
+        {
+          "round": 1,
+          "event": "decay",
+          "R_old": 0.5,
+          "R_new": 0.495,
+          "ts": 1777289573.7370706
+        },
+        {
+          "round": 2,
+          "event": "decay",
+          "R_old": 0.495,
+          "R_new": 0.49005,
+          "ts": 1777290212.2272005
+        },
+        {
+          "round": 3,
+          "event": "decay",
+          "R_old": 0.49005,
+          "R_new": 0.485149,
+          "ts": 1777290596.1760197
+        },
+        {
+          "round": 4,
+          "event": "decay",
+          "R_old": 0.485149,
+          "R_new": 0.480298,
+          "ts": 1777291208.225941
+        },
+        {
+          "round": 5,
+          "event": "decay",
+          "R_old": 0.480298,
+          "R_new": 0.475495,
+          "ts": 1777291820.9276738
+        },
+        {
+          "round": 6,
+          "event": "decay",
+          "R_old": 0.475495,
+          "R_new": 0.47074,
+          "ts": 1777292436.5085225
+        },
+        {
+          "round": 7,
+          "event": "decay",
+          "R_old": 0.47074,
+          "R_new": 0.466033,
+          "ts": 1777293052.6146438
+        },
+        {
+          "round": 8,
+          "event": "decay",
+          "R_old": 0.466033,
+          "R_new": 0.461372,
+          "ts": 1777293690.4594243
+        },
+        {
+          "round": 9,
+          "event": "decay",
+          "R_old": 0.461372,
+          "R_new": 0.456759,
+          "ts": 1777297706.4950275
+        },
+        {
+          "round": 10,
+          "event": "decay",
+          "R_old": 0.456759,
+          "R_new": 0.452191,
+          "ts": 1777298323.1588142
+        }
+      ]
+    },
+    "client_8": {
+      "client_id": "client_8",
+      "reputation": 0.45675862374182036,
+      "total_rounds_participated": 1,
+      "total_valid_updates": 0,
+      "total_invalid_updates": 1,
+      "cumulative_gain": 0.0,
+      "last_participated_round": 2,
+      "history": [
+        {
+          "round": 1,
+          "event": "decay",
+          "R_old": 0.5,
+          "R_new": 0.495,
+          "ts": 1777289573.7370756
+        },
+        {
+          "round": 2,
+          "G_i": 0.0,
+          "is_valid": false,
+          "delta": 0.0,
+          "R_old": 0.495,
+          "R_new": 0.495,
+          "c_i": 0.249676,
+          "ts": 1777290212.2271338
+        },
+        {
+          "round": 3,
+          "event": "decay",
+          "R_old": 0.495,
+          "R_new": 0.49005,
+          "ts": 1777290596.1760228
+        },
+        {
+          "round": 4,
+          "event": "decay",
+          "R_old": 0.49005,
+          "R_new": 0.485149,
+          "ts": 1777291208.225944
+        },
+        {
+          "round": 5,
+          "event": "decay",
+          "R_old": 0.485149,
+          "R_new": 0.480298,
+          "ts": 1777291820.9276772
+        },
+        {
+          "round": 6,
+          "event": "decay",
+          "R_old": 0.480298,
+          "R_new": 0.475495,
+          "ts": 1777292436.5085256
+        },
+        {
+          "round": 7,
+          "event": "decay",
+          "R_old": 0.475495,
+          "R_new": 0.47074,
+          "ts": 1777293052.6146467
+        },
+        {
+          "round": 8,
+          "event": "decay",
+          "R_old": 0.47074,
+          "R_new": 0.466033,
+          "ts": 1777293690.4594278
+        },
+        {
+          "round": 9,
+          "event": "decay",
+          "R_old": 0.466033,
+          "R_new": 0.461372,
+          "ts": 1777297706.4950314
+        },
+        {
+          "round": 10,
+          "event": "decay",
+          "R_old": 0.461372,
+          "R_new": 0.456759,
+          "ts": 1777298323.158817
+        }
+      ]
+    },
+    "client_9": {
+      "client_id": "client_9",
+      "reputation": 0.49230545512499996,
+      "total_rounds_participated": 6,
+      "total_valid_updates": 1,
+      "total_invalid_updates": 5,
+      "cumulative_gain": 0.125,
+      "last_participated_round": 10,
+      "history": [
+        {
+          "round": 1,
+          "G_i": 0.125,
+          "is_valid": true,
+          "delta": 0.125,
+          "R_old": 0.5,
+          "R_new": 0.5125,
+          "c_i": 0.25,
+          "ts": 1777289573.7369757
+        },
+        {
+          "round": 2,
+          "event": "decay",
+          "R_old": 0.5125,
+          "R_new": 0.507375,
+          "ts": 1777290212.2272034
+        },
+        {
+          "round": 3,
+          "event": "decay",
+          "R_old": 0.507375,
+          "R_new": 0.502301,
+          "ts": 1777290596.176026
+        },
+        {
+          "round": 4,
+          "G_i": 0.0,
+          "is_valid": false,
+          "delta": 0.0,
+          "R_old": 0.502301,
+          "R_new": 0.502301,
+          "c_i": 0.25268,
+          "ts": 1777291208.2258875
+        },
+        {
+          "round": 5,
+          "event": "decay",
+          "R_old": 0.502301,
+          "R_new": 0.497278,
+          "ts": 1777291820.9276805
+        },
+        {
+          "round": 6,
+          "event": "decay",
+          "R_old": 0.497278,
+          "R_new": 0.492305,
+          "ts": 1777292436.5085287
+        },
+        {
+          "round": 7,
+          "G_i": 0.0,
+          "is_valid": false,
+          "delta": 0.0,
+          "R_old": 0.492305,
+          "R_new": 0.492305,
+          "c_i": 0.246556,
+          "ts": 1777293052.6145732
+        },
+        {
+          "round": 8,
+          "G_i": 0.0,
+          "is_valid": false,
+          "delta": 0.0,
+          "R_old": 0.492305,
+          "R_new": 0.492305,
+          "c_i": 0.252695,
+          "ts": 1777293690.4593558
+        },
+        {
+          "round": 9,
+          "G_i": 0.0,
+          "is_valid": false,
+          "delta": 0.0,
+          "R_old": 0.492305,
+          "R_new": 0.492305,
+          "c_i": 0.251158,
+          "ts": 1777297706.4949467
+        },
+        {
+          "round": 10,
+          "G_i": 0.0,
+          "is_valid": false,
+          "delta": 0.0,
+          "R_old": 0.492305,
+          "R_new": 0.492305,
+          "c_i": 0.266293,
+          "ts": 1777298323.158746
+        }
+      ]
+    },
+    "client_10": {
+      "client_id": "client_10",
+      "reputation": 0.48250857656801244,
+      "total_rounds_participated": 4,
+      "total_valid_updates": 1,
+      "total_invalid_updates": 3,
+      "cumulative_gain": 0.125,
+      "last_participated_round": 6,
+      "history": [
+        {
+          "round": 1,
+          "G_i": 0.125,
+          "is_valid": true,
+          "delta": 0.125,
+          "R_old": 0.5,
+          "R_new": 0.5125,
+          "c_i": 0.25,
+          "ts": 1777289573.7369363
+        },
+        {
+          "round": 2,
+          "event": "decay",
+          "R_old": 0.5125,
+          "R_new": 0.507375,
+          "ts": 1777290212.2272065
+        },
+        {
+          "round": 3,
+          "event": "decay",
+          "R_old": 0.507375,
+          "R_new": 0.502301,
+          "ts": 1777290596.1760294
+        },
+        {
+          "round": 4,
+          "G_i": 0.0,
+          "is_valid": false,
+          "delta": 0.0,
+          "R_old": 0.502301,
+          "R_new": 0.502301,
+          "c_i": 0.250722,
+          "ts": 1777291208.225871
+        },
+        {
+          "round": 5,
+          "G_i": 0.0,
+          "is_valid": false,
+          "delta": 0.0,
+          "R_old": 0.502301,
+          "R_new": 0.502301,
+          "c_i": 0.252394,
+          "ts": 1777291820.927604
+        },
+        {
+          "round": 6,
+          "G_i": 0.0,
+          "is_valid": false,
+          "delta": 0.0,
+          "R_old": 0.502301,
+          "R_new": 0.502301,
+          "c_i": 0.253173,
+          "ts": 1777292436.508446
+        },
+        {
+          "round": 7,
+          "event": "decay",
+          "R_old": 0.502301,
+          "R_new": 0.497278,
+          "ts": 1777293052.614651
+        },
+        {
+          "round": 8,
+          "event": "decay",
+          "R_old": 0.497278,
+          "R_new": 0.492305,
+          "ts": 1777293690.4594314
+        },
+        {
+          "round": 9,
+          "event": "decay",
+          "R_old": 0.492305,
+          "R_new": 0.487382,
+          "ts": 1777297706.4950345
+        },
+        {
+          "round": 10,
+          "event": "decay",
+          "R_old": 0.487382,
+          "R_new": 0.482509,
+          "ts": 1777298323.1588197
+        }
+      ]
+    },
+    "client_11": {
+      "client_id": "client_11",
+      "reputation": 0.46137234721396,
+      "total_rounds_participated": 2,
+      "total_valid_updates": 0,
+      "total_invalid_updates": 2,
+      "cumulative_gain": 0.0,
+      "last_participated_round": 10,
+      "history": [
+        {
+          "round": 1,
+          "event": "decay",
+          "R_old": 0.5,
+          "R_new": 0.495,
+          "ts": 1777289573.7370803
+        },
+        {
+          "round": 2,
+          "event": "decay",
+          "R_old": 0.495,
+          "R_new": 0.49005,
+          "ts": 1777290212.2272093
+        },
+        {
+          "round": 3,
+          "event": "decay",
+          "R_old": 0.49005,
+          "R_new": 0.485149,
+          "ts": 1777290596.1760328
+        },
+        {
+          "round": 4,
+          "G_i": 0.0,
+          "is_valid": false,
+          "delta": 0.0,
+          "R_old": 0.485149,
+          "R_new": 0.485149,
+          "c_i": 0.251422,
+          "ts": 1777291208.2259116
+        },
+        {
+          "round": 5,
+          "event": "decay",
+          "R_old": 0.485149,
+          "R_new": 0.480298,
+          "ts": 1777291820.9276836
+        },
+        {
+          "round": 6,
+          "event": "decay",
+          "R_old": 0.480298,
+          "R_new": 0.475495,
+          "ts": 1777292436.508532
+        },
+        {
+          "round": 7,
+          "event": "decay",
+          "R_old": 0.475495,
+          "R_new": 0.47074,
+          "ts": 1777293052.6146536
+        },
+        {
+          "round": 8,
+          "event": "decay",
+          "R_old": 0.47074,
+          "R_new": 0.466033,
+          "ts": 1777293690.4594345
+        },
+        {
+          "round": 9,
+          "event": "decay",
+          "R_old": 0.466033,
+          "R_new": 0.461372,
+          "ts": 1777297706.4950376
+        },
+        {
+          "round": 10,
+          "G_i": 0.0,
+          "is_valid": false,
+          "delta": 0.0,
+          "R_old": 0.461372,
+          "R_new": 0.461372,
+          "c_i": 0.250871,
+          "ts": 1777298323.1587863
+        }
+      ]
+    },
+    "client_12": {
+      "client_id": "client_12",
+      "reputation": 0.4776834908023323,
+      "total_rounds_participated": 3,
+      "total_valid_updates": 1,
+      "total_invalid_updates": 2,
+      "cumulative_gain": 0.125,
+      "last_participated_round": 7,
+      "history": [
+        {
+          "round": 1,
+          "G_i": 0.125,
+          "is_valid": true,
+          "delta": 0.125,
+          "R_old": 0.5,
+          "R_new": 0.5125,
+          "c_i": 0.25,
+          "ts": 1777289573.7370217
+        },
+        {
+          "round": 2,
+          "event": "decay",
+          "R_old": 0.5125,
+          "R_new": 0.507375,
+          "ts": 1777290212.2272122
+        },
+        {
+          "round": 3,
+          "event": "decay",
+          "R_old": 0.507375,
+          "R_new": 0.502301,
+          "ts": 1777290596.1760364
+        },
+        {
+          "round": 4,
+          "event": "decay",
+          "R_old": 0.502301,
+          "R_new": 0.497278,
+          "ts": 1777291208.2259479
+        },
+        {
+          "round": 5,
+          "G_i": 0.0,
+          "is_valid": false,
+          "delta": 0.0,
+          "R_old": 0.497278,
+          "R_new": 0.497278,
+          "c_i": 0.249181,
+          "ts": 1777291820.9276457
+        },
+        {
+          "round": 6,
+          "event": "decay",
+          "R_old": 0.497278,
+          "R_new": 0.492305,
+          "ts": 1777292436.5085347
+        },
+        {
+          "round": 7,
+          "G_i": 0.0,
+          "is_valid": false,
+          "delta": 0.0,
+          "R_old": 0.492305,
+          "R_new": 0.492305,
+          "c_i": 0.252219,
+          "ts": 1777293052.614614
+        },
+        {
+          "round": 8,
+          "event": "decay",
+          "R_old": 0.492305,
+          "R_new": 0.487382,
+          "ts": 1777293690.459438
+        },
+        {
+          "round": 9,
+          "event": "decay",
+          "R_old": 0.487382,
+          "R_new": 0.482509,
+          "ts": 1777297706.4950402
+        },
+        {
+          "round": 10,
+          "event": "decay",
+          "R_old": 0.482509,
+          "R_new": 0.477683,
+          "ts": 1777298323.158822
+        }
+      ]
+    },
+    "client_13": {
+      "client_id": "client_13",
+      "reputation": 0.45675862374182036,
+      "total_rounds_participated": 1,
+      "total_valid_updates": 0,
+      "total_invalid_updates": 1,
+      "cumulative_gain": 0.0,
+      "last_participated_round": 5,
+      "history": [
+        {
+          "round": 1,
+          "event": "decay",
+          "R_old": 0.5,
+          "R_new": 0.495,
+          "ts": 1777289573.7370849
+        },
+        {
+          "round": 2,
+          "event": "decay",
+          "R_old": 0.495,
+          "R_new": 0.49005,
+          "ts": 1777290212.2272153
+        },
+        {
+          "round": 3,
+          "event": "decay",
+          "R_old": 0.49005,
+          "R_new": 0.485149,
+          "ts": 1777290596.1760397
+        },
+        {
+          "round": 4,
+          "event": "decay",
+          "R_old": 0.485149,
+          "R_new": 0.480298,
+          "ts": 1777291208.225951
+        },
+        {
+          "round": 5,
+          "G_i": 0.0,
+          "is_valid": false,
+          "delta": 0.0,
+          "R_old": 0.480298,
+          "R_new": 0.480298,
+          "c_i": 0.251139,
+          "ts": 1777291820.9276216
+        },
+        {
+          "round": 6,
+          "event": "decay",
+          "R_old": 0.480298,
+          "R_new": 0.475495,
+          "ts": 1777292436.5085375
+        },
+        {
+          "round": 7,
+          "event": "decay",
+          "R_old": 0.475495,
+          "R_new": 0.47074,
+          "ts": 1777293052.6146567
+        },
+        {
+          "round": 8,
+          "event": "decay",
+          "R_old": 0.47074,
+          "R_new": 0.466033,
+          "ts": 1777293690.4594407
+        },
+        {
+          "round": 9,
+          "event": "decay",
+          "R_old": 0.466033,
+          "R_new": 0.461372,
+          "ts": 1777297706.495043
+        },
+        {
+          "round": 10,
+          "event": "decay",
+          "R_old": 0.461372,
+          "R_new": 0.456759,
+          "ts": 1777298323.158825
+        }
+      ]
+    },
+    "client_14": {
+      "client_id": "client_14",
+      "reputation": 0.45219103750440215,
+      "total_rounds_participated": 0,
+      "total_valid_updates": 0,
+      "total_invalid_updates": 0,
+      "cumulative_gain": 0.0,
+      "last_participated_round": 0,
+      "history": [
+        {
+          "round": 1,
+          "event": "decay",
+          "R_old": 0.5,
+          "R_new": 0.495,
+          "ts": 1777289573.7370894
+        },
+        {
+          "round": 2,
+          "event": "decay",
+          "R_old": 0.495,
+          "R_new": 0.49005,
+          "ts": 1777290212.2272184
+        },
+        {
+          "round": 3,
+          "event": "decay",
+          "R_old": 0.49005,
+          "R_new": 0.485149,
+          "ts": 1777290596.176043
+        },
+        {
+          "round": 4,
+          "event": "decay",
+          "R_old": 0.485149,
+          "R_new": 0.480298,
+          "ts": 1777291208.225954
+        },
+        {
+          "round": 5,
+          "event": "decay",
+          "R_old": 0.480298,
+          "R_new": 0.475495,
+          "ts": 1777291820.927687
+        },
+        {
+          "round": 6,
+          "event": "decay",
+          "R_old": 0.475495,
+          "R_new": 0.47074,
+          "ts": 1777292436.5085402
+        },
+        {
+          "round": 7,
+          "event": "decay",
+          "R_old": 0.47074,
+          "R_new": 0.466033,
+          "ts": 1777293052.6146595
+        },
+        {
+          "round": 8,
+          "event": "decay",
+          "R_old": 0.466033,
+          "R_new": 0.461372,
+          "ts": 1777293690.459444
+        },
+        {
+          "round": 9,
+          "event": "decay",
+          "R_old": 0.461372,
+          "R_new": 0.456759,
+          "ts": 1777297706.495046
+        },
+        {
+          "round": 10,
+          "event": "decay",
+          "R_old": 0.456759,
+          "R_new": 0.452191,
+          "ts": 1777298323.1588278
+        }
+      ]
+    },
+    "client_15": {
+      "client_id": "client_15",
+      "reputation": 0.46473634963800003,
+      "total_rounds_participated": 4,
+      "total_valid_updates": 0,
+      "total_invalid_updates": 4,
+      "cumulative_gain": -0.125,
+      "last_participated_round": 10,
+      "history": [
+        {
+          "round": 1,
+          "event": "decay",
+          "R_old": 0.5,
+          "R_new": 0.495,
+          "ts": 1777289573.7370937
+        },
+        {
+          "round": 2,
+          "event": "decay",
+          "R_old": 0.495,
+          "R_new": 0.49005,
+          "ts": 1777290212.227221
+        },
+        {
+          "round": 3,
+          "G_i": -0.125,
+          "is_valid": false,
+          "delta": 0.0,
+          "R_old": 0.49005,
+          "R_new": 0.4838,
+          "c_i": 0.0,
+          "ts": 1777290596.1759853
+        },
+        {
+          "round": 4,
+          "event": "decay",
+          "R_old": 0.4838,
+          "R_new": 0.478962,
+          "ts": 1777291208.2259572
+        },
+        {
+          "round": 5,
+          "event": "decay",
+          "R_old": 0.478962,
+          "R_new": 0.474172,
+          "ts": 1777291820.92769
+        },
+        {
+          "round": 6,
+          "G_i": 0.0,
+          "is_valid": false,
+          "delta": 0.0,
+          "R_old": 0.474172,
+          "R_new": 0.474172,
+          "c_i": 0.248935,
+          "ts": 1777292436.5084767
+        },
+        {
+          "round": 7,
+          "event": "decay",
+          "R_old": 0.474172,
+          "R_new": 0.469431,
+          "ts": 1777293052.6146626
+        },
+        {
+          "round": 8,
+          "G_i": 0.0,
+          "is_valid": false,
+          "delta": 0.0,
+          "R_old": 0.469431,
+          "R_new": 0.469431,
+          "c_i": 0.244332,
+          "ts": 1777293690.4593968
+        },
+        {
+          "round": 9,
+          "event": "decay",
+          "R_old": 0.469431,
+          "R_new": 0.464736,
+          "ts": 1777297706.4950485
+        },
+        {
+          "round": 10,
+          "G_i": 0.0,
+          "is_valid": false,
+          "delta": 0.0,
+          "R_old": 0.464736,
+          "R_new": 0.464736,
+          "c_i": 0.23988,
+          "ts": 1777298323.1587632
+        }
+      ]
+    },
+    "client_16": {
+      "client_id": "client_16",
+      "reputation": 0.45219103750440215,
+      "total_rounds_participated": 0,
+      "total_valid_updates": 0,
+      "total_invalid_updates": 0,
+      "cumulative_gain": 0.0,
+      "last_participated_round": 0,
+      "history": [
+        {
+          "round": 1,
+          "event": "decay",
+          "R_old": 0.5,
+          "R_new": 0.495,
+          "ts": 1777289573.7370977
+        },
+        {
+          "round": 2,
+          "event": "decay",
+          "R_old": 0.495,
+          "R_new": 0.49005,
+          "ts": 1777290212.2272236
+        },
+        {
+          "round": 3,
+          "event": "decay",
+          "R_old": 0.49005,
+          "R_new": 0.485149,
+          "ts": 1777290596.1760461
+        },
+        {
+          "round": 4,
+          "event": "decay",
+          "R_old": 0.485149,
+          "R_new": 0.480298,
+          "ts": 1777291208.225962
+        },
+        {
+          "round": 5,
+          "event": "decay",
+          "R_old": 0.480298,
+          "R_new": 0.475495,
+          "ts": 1777291820.9276938
+        },
+        {
+          "round": 6,
+          "event": "decay",
+          "R_old": 0.475495,
+          "R_new": 0.47074,
+          "ts": 1777292436.508544
+        },
+        {
+          "round": 7,
+          "event": "decay",
+          "R_old": 0.47074,
+          "R_new": 0.466033,
+          "ts": 1777293052.6146662
+        },
+        {
+          "round": 8,
+          "event": "decay",
+          "R_old": 0.466033,
+          "R_new": 0.461372,
+          "ts": 1777293690.4594474
+        },
+        {
+          "round": 9,
+          "event": "decay",
+          "R_old": 0.461372,
+          "R_new": 0.456759,
+          "ts": 1777297706.4950516
+        },
+        {
+          "round": 10,
+          "event": "decay",
+          "R_old": 0.456759,
+          "R_new": 0.452191,
+          "ts": 1777298323.1588302
+        }
+      ]
+    },
+    "client_17": {
+      "client_id": "client_17",
+      "reputation": 0.47074007470049994,
+      "total_rounds_participated": 4,
+      "total_valid_updates": 0,
+      "total_invalid_updates": 4,
+      "cumulative_gain": 0.0,
+      "last_participated_round": 9,
+      "history": [
+        {
+          "round": 1,
+          "event": "decay",
+          "R_old": 0.5,
+          "R_new": 0.495,
+          "ts": 1777289573.737102
+        },
+        {
+          "round": 2,
+          "event": "decay",
+          "R_old": 0.495,
+          "R_new": 0.49005,
+          "ts": 1777290212.227226
+        },
+        {
+          "round": 3,
+          "event": "decay",
+          "R_old": 0.49005,
+          "R_new": 0.485149,
+          "ts": 1777290596.1760495
+        },
+        {
+          "round": 4,
+          "G_i": 0.0,
+          "is_valid": false,
+          "delta": 0.0,
+          "R_old": 0.485149,
+          "R_new": 0.485149,
+          "c_i": 0.245175,
+          "ts": 1777291208.2259007
+        },
+        {
+          "round": 5,
+          "event": "decay",
+          "R_old": 0.485149,
+          "R_new": 0.480298,
+          "ts": 1777291820.9276972
+        },
+        {
+          "round": 6,
+          "event": "decay",
+          "R_old": 0.480298,
+          "R_new": 0.475495,
+          "ts": 1777292436.5085468
+        },
+        {
+          "round": 7,
+          "G_i": 0.0,
+          "is_valid": false,
+          "delta": 0.0,
+          "R_old": 0.475495,
+          "R_new": 0.475495,
+          "c_i": 0.251515,
+          "ts": 1777293052.61459
+        },
+        {
+          "round": 8,
+          "G_i": 0.0,
+          "is_valid": false,
+          "delta": 0.0,
+          "R_old": 0.475495,
+          "R_new": 0.475495,
+          "c_i": 0.254025,
+          "ts": 1777293690.4593728
+        },
+        {
+          "round": 9,
+          "G_i": 0.0,
+          "is_valid": false,
+          "delta": 0.0,
+          "R_old": 0.475495,
+          "R_new": 0.475495,
+          "c_i": 0.250105,
+          "ts": 1777297706.494996
+        },
+        {
+          "round": 10,
+          "event": "decay",
+          "R_old": 0.475495,
+          "R_new": 0.47074,
+          "ts": 1777298323.1588326
+        }
+      ]
+    },
+    "client_18": {
+      "client_id": "client_18",
+      "reputation": 0.46137234721396,
+      "total_rounds_participated": 2,
+      "total_valid_updates": 0,
+      "total_invalid_updates": 2,
+      "cumulative_gain": 0.0,
+      "last_participated_round": 9,
+      "history": [
+        {
+          "round": 1,
+          "event": "decay",
+          "R_old": 0.5,
+          "R_new": 0.495,
+          "ts": 1777289573.737108
+        },
+        {
+          "round": 2,
+          "event": "decay",
+          "R_old": 0.495,
+          "R_new": 0.49005,
+          "ts": 1777290212.2272289
+        },
+        {
+          "round": 3,
+          "event": "decay",
+          "R_old": 0.49005,
+          "R_new": 0.485149,
+          "ts": 1777290596.1760523
+        },
+        {
+          "round": 4,
+          "event": "decay",
+          "R_old": 0.485149,
+          "R_new": 0.480298,
+          "ts": 1777291208.2259684
+        },
+        {
+          "round": 5,
+          "event": "decay",
+          "R_old": 0.480298,
+          "R_new": 0.475495,
+          "ts": 1777291820.9277005
+        },
+        {
+          "round": 6,
+          "G_i": 0.0,
+          "is_valid": false,
+          "delta": 0.0,
+          "R_old": 0.475495,
+          "R_new": 0.475495,
+          "c_i": 0.245013,
+          "ts": 1777292436.5084913
+        },
+        {
+          "round": 7,
+          "event": "decay",
+          "R_old": 0.475495,
+          "R_new": 0.47074,
+          "ts": 1777293052.6146693
+        },
+        {
+          "round": 8,
+          "event": "decay",
+          "R_old": 0.47074,
+          "R_new": 0.466033,
+          "ts": 1777293690.459451
+        },
+        {
+          "round": 9,
+          "G_i": 0.0,
+          "is_valid": false,
+          "delta": 0.0,
+          "R_old": 0.466033,
+          "R_new": 0.466033,
+          "c_i": 0.249514,
+          "ts": 1777297706.4949846
+        },
+        {
+          "round": 10,
+          "event": "decay",
+          "R_old": 0.466033,
+          "R_new": 0.461372,
+          "ts": 1777298323.1588354
+        }
+      ]
+    },
+    "client_19": {
+      "client_id": "client_19",
+      "reputation": 0.45675862374182036,
+      "total_rounds_participated": 1,
+      "total_valid_updates": 0,
+      "total_invalid_updates": 1,
+      "cumulative_gain": 0.0,
+      "last_participated_round": 2,
+      "history": [
+        {
+          "round": 1,
+          "event": "decay",
+          "R_old": 0.5,
+          "R_new": 0.495,
+          "ts": 1777289573.7371128
+        },
+        {
+          "round": 2,
+          "G_i": 0.0,
+          "is_valid": false,
+          "delta": 0.0,
+          "R_old": 0.495,
+          "R_new": 0.495,
+          "c_i": 0.25024,
+          "ts": 1777290212.2271566
+        },
+        {
+          "round": 3,
+          "event": "decay",
+          "R_old": 0.495,
+          "R_new": 0.49005,
+          "ts": 1777290596.1760557
+        },
+        {
+          "round": 4,
+          "event": "decay",
+          "R_old": 0.49005,
+          "R_new": 0.485149,
+          "ts": 1777291208.2259736
+        },
+        {
+          "round": 5,
+          "event": "decay",
+          "R_old": 0.485149,
+          "R_new": 0.480298,
+          "ts": 1777291820.9277036
+        },
+        {
+          "round": 6,
+          "event": "decay",
+          "R_old": 0.480298,
+          "R_new": 0.475495,
+          "ts": 1777292436.5085497
+        },
+        {
+          "round": 7,
+          "event": "decay",
+          "R_old": 0.475495,
+          "R_new": 0.47074,
+          "ts": 1777293052.6146724
+        },
+        {
+          "round": 8,
+          "event": "decay",
+          "R_old": 0.47074,
+          "R_new": 0.466033,
+          "ts": 1777293690.459454
+        },
+        {
+          "round": 9,
+          "event": "decay",
+          "R_old": 0.466033,
+          "R_new": 0.461372,
+          "ts": 1777297706.4950554
+        },
+        {
+          "round": 10,
+          "event": "decay",
+          "R_old": 0.461372,
+          "R_new": 0.456759,
+          "ts": 1777298323.1588383
+        }
+      ]
+    }
+  }
+}
