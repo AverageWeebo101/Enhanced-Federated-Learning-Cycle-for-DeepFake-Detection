@@ -987,6 +987,19 @@ class FederatedModelEvaluator:
 
             y_probs = np.array([], dtype=np.float32)
 
+        if y_probs.size:
+
+            logger.info(
+                "Prediction scores - min: %.6f | max: %.6f | mean: %.6f",
+                float(np.min(y_probs)),
+                float(np.max(y_probs)),
+                float(np.mean(y_probs)),
+            )
+
+        else:
+
+            logger.info("Prediction scores - empty; no scores to summarize.")
+
         # --- 2. Classification metrics -------------------------------- #
 
         cls_metrics = compute_classification_metrics(

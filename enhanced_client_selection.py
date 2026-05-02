@@ -71,6 +71,12 @@ class ClientMetrics:
 
     data_volume: int = 0  # number of local samples
 
+    num_real: int = 0
+
+    num_fake: int = 0
+
+    class_balance: float = 0.5  # fraction of class-1 samples
+
     inference_latency: float = 0.0  # seconds for a forward pass batch
 
     last_selected_round: int = 0  # last round this client participated
@@ -349,6 +355,16 @@ class EnhancedClientSelector:
 
         instead of a fixed K.
 
+    balance_target : float | None
+
+        If set, add a score bonus for clients whose class balance is near
+
+        this target (e.g. 0.5 for a balanced dataset).
+
+    balance_weight : float
+
+        Weight for the class-balance bonus term.
+
     """
 
     def __init__(
@@ -358,6 +374,8 @@ class EnhancedClientSelector:
         weights: Optional[SelectionWeights] = None,
         target_k: int = 5,
         threshold: Optional[float] = None,
+        balance_target: Optional[float] = None,
+        balance_weight: float = 0.0,
     ) -> None:
 
         self.clients = {c.client_id: c for c in clients}
@@ -369,6 +387,10 @@ class EnhancedClientSelector:
         self.target_k = target_k
 
         self.threshold = threshold
+
+        self.balance_target = balance_target
+
+        self.balance_weight = balance_weight
 
         # Register every client in the ledger
 
@@ -422,11 +444,23 @@ class EnhancedClientSelector:
             ]
         )
 
+        B = None
+
+        if self.balance_target is not None and self.balance_weight > 0:
+
+            raw_b = np.array([self.clients[i].metrics.class_balance for i in ids])
+
+            B = 1.0 - np.abs(raw_b - self.balance_target)
+
         # --- composite score ------------------------------------------- #
 
         w = self.weights
 
         scores = w.w_v * V + w.w_d * D + w.w_l * (1.0 - L) + w.w_r * R - w.w_s * S
+
+        if B is not None:
+
+            scores = scores + self.balance_weight * B
 
         ranked = sorted(zip(ids, scores), key=lambda x: x[1], reverse=True)
 

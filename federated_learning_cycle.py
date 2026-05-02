@@ -147,7 +147,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 
 import numpy as np
@@ -414,6 +414,22 @@ class FLCycleConfig:
 
     local_lr: float = 1e-4
 
+    use_focal_loss: bool = False
+
+    focal_gamma: float = 2.0
+
+    focal_alpha: Optional[float] = None
+
+    class_weight: Optional[Dict[int, float]] = None
+
+    label_smoothing: float = 0.0
+
+    weight_decay: float = 0.0
+
+    freeze_backbone: bool = False
+
+    trainable_layers: Optional[int] = 20
+
     # Cap validator-side scoring batches per client update.
     validator_max_eval_batches: Optional[int] = 8
 
@@ -433,6 +449,8 @@ class FLCycleConfig:
         )
     )
 
+    distillation_min_teachers: int = 1
+
     # -- Client selection (Part 1) ------------------------------------- #
 
     selection_weights: SelectionWeights = field(
@@ -444,6 +462,10 @@ class FLCycleConfig:
             w_s=0.15,
         )
     )
+
+    selection_balance_target: Optional[float] = None
+
+    selection_balance_weight: float = 0.0
 
     # -- Update validation (Part 2) ----------------------------------- #
 
@@ -489,6 +511,66 @@ class FLCycleConfig:
 
 
 # ====================================================================== #
+
+#  Loss/optimizer helpers                                                #
+
+# ====================================================================== #
+
+
+def _binary_focal_loss(
+    gamma: float = 2.0,
+    alpha: Optional[float] = None,
+) -> Callable[[tf.Tensor, tf.Tensor], tf.Tensor]:
+    """Create a binary focal loss with optional class weighting."""
+
+    def _loss(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
+        y_true_f = tf.cast(y_true, tf.float32)
+        y_pred_f = tf.cast(y_pred, tf.float32)
+        eps = tf.constant(1e-7, dtype=tf.float32)
+        y_pred_f = tf.clip_by_value(y_pred_f, eps, 1.0 - eps)
+
+        p_t = y_true_f * y_pred_f + (1.0 - y_true_f) * (1.0 - y_pred_f)
+        if alpha is None:
+            alpha_factor = 1.0
+        else:
+            alpha_factor = y_true_f * alpha + (1.0 - y_true_f) * (1.0 - alpha)
+
+        loss = -alpha_factor * tf.pow(1.0 - p_t, gamma) * tf.math.log(p_t)
+        return tf.reduce_mean(loss)
+
+    return _loss
+
+
+def _build_loss(cfg: FLCycleConfig) -> Any:
+    if cfg.use_focal_loss:
+        return _binary_focal_loss(cfg.focal_gamma, cfg.focal_alpha)
+
+    return tf.keras.losses.BinaryCrossentropy(label_smoothing=cfg.label_smoothing)
+
+
+def _build_optimizer(cfg: FLCycleConfig) -> tf.keras.optimizers.Optimizer:
+    if cfg.weight_decay > 0:
+        opt_cls = getattr(tf.keras.optimizers, "AdamW", None)
+        if opt_cls is not None:
+            return opt_cls(learning_rate=cfg.local_lr, weight_decay=cfg.weight_decay)
+        logger.warning("AdamW not available; falling back to Adam.")
+
+    return tf.keras.optimizers.Adam(cfg.local_lr)
+
+
+def _apply_trainable_policy(model: tf.keras.Model, cfg: FLCycleConfig) -> None:
+    if not cfg.freeze_backbone:
+        return
+
+    n_layers = len(model.layers)
+    keep_trainable = cfg.trainable_layers if cfg.trainable_layers is not None else 1
+    keep_trainable = max(1, min(keep_trainable, n_layers))
+
+    for layer in model.layers[:-keep_trainable]:
+        layer.trainable = False
+
+    for layer in model.layers[-keep_trainable:]:
+        layer.trainable = True
 
 
 #  2.  DATA HELPERS  (simulation — replace with real FF++ loaders)        #
@@ -821,9 +903,11 @@ class FederatedLearningCycle:
             compile=False,
         )
 
+        _apply_trainable_policy(model, cfg)
+
         model.compile(
-            optimizer=tf.keras.optimizers.Adam(cfg.local_lr),
-            loss="binary_crossentropy",
+            optimizer=_build_optimizer(cfg),
+            loss=_build_loss(cfg),
             metrics=["accuracy"],
         )
 
@@ -877,11 +961,26 @@ class FederatedLearningCycle:
 
         for cid, local_ds in client_data.items():
 
-            n_samples = sum(1 for _ in local_ds)
+            n_samples = 0
+            num_real = 0
+            num_fake = 0
+
+            for _, label in local_ds:
+                y_val = int(tf.cast(label, tf.int32).numpy())
+                n_samples += 1
+                if y_val == 1:
+                    num_fake += 1
+                else:
+                    num_real += 1
+
+            balance = num_fake / max(n_samples, 1)
 
             metrics = ClientMetrics(
                 local_validation_metric=float(rng.uniform(0.4, 0.9)),
                 data_volume=n_samples,
+                num_real=num_real,
+                num_fake=num_fake,
+                class_balance=float(balance),
                 inference_latency=float(rng.uniform(0.01, 0.15)),
                 last_selected_round=0,
             )
@@ -940,6 +1039,8 @@ class FederatedLearningCycle:
             reputation_ledger=self.basic_ledger,
             weights=cfg.selection_weights,
             target_k=cfg.clients_per_round,
+            balance_target=cfg.selection_balance_target,
+            balance_weight=cfg.selection_balance_weight,
         )
 
         # -- Part 2: Update validator ---------------------------------- #
@@ -970,9 +1071,10 @@ class FederatedLearningCycle:
         if self._local_train_model is None:
             self._local_train_model = tf.keras.models.clone_model(self.global_model)
             self._local_train_model.build(self.global_model.input_shape)
+            _apply_trainable_policy(self._local_train_model, cfg)
             self._local_train_model.compile(
-                optimizer=tf.keras.optimizers.Adam(cfg.local_lr),
-                loss="binary_crossentropy",
+                optimizer=_build_optimizer(cfg),
+                loss=_build_loss(cfg),
                 metrics=["accuracy"],
             )
         else:
@@ -1050,7 +1152,11 @@ class FederatedLearningCycle:
 
         dataset = client.local_data.batch(cfg.local_batch_size)
 
-        local_model.fit(dataset, epochs=cfg.local_epochs, verbose=0)
+        fit_kwargs = {}
+        if cfg.class_weight:
+            fit_kwargs["class_weight"] = cfg.class_weight
+
+        local_model.fit(dataset, epochs=cfg.local_epochs, verbose=0, **fit_kwargs)
 
         return local_model.get_weights(), client.metrics.data_volume
 
@@ -1309,7 +1415,9 @@ class FederatedLearningCycle:
                 if not r.rejected and r.contribution_weight > 0
             }
 
-            if len(contribution_weights) >= 1:
+            min_teachers = max(1, int(cfg.distillation_min_teachers))
+
+            if len(contribution_weights) >= min_teachers:
 
                 logger.info(
                     "Running knowledge distillation with %d teacher(s) …",
@@ -1341,7 +1449,8 @@ class FederatedLearningCycle:
             else:
 
                 logger.info(
-                    "Skipping distillation — no contributing " "clients (%d).",
+                    "Skipping distillation — need at least %d contributing client(s) (got %d).",
+                    min_teachers,
                     len(contribution_weights),
                 )
 
